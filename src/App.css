@@ -15,6 +15,18 @@
   background: #001529;
 }
 
+.app-shell-sider {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  overflow: auto;
+}
+
+.app-shell-sider .ant-layout-sider-children {
+  height: 100%;
+}
+
 .ant-menu-dark {
   background: #001529;
 }
@@ -35,6 +47,24 @@
   padding: 24px;
   background: #f0f2f5;
   min-height: 280px;
+}
+
+.home-workbench {
+  font-family: "Poppins", "Noto Sans SC", "Segoe UI", sans-serif;
+}
+
+.home-hero {
+  margin-bottom: 16px;
+  padding: 20px 24px;
+  border-radius: 14px;
+  background: linear-gradient(120deg, #f7fbff 0%, #e8f5ee 50%, #fff8ef 100%);
+  border: 1px solid #dce9df;
+}
+
+.home-upload-card,
+.home-status-card {
+  border-radius: 12px;
+  border: 1px solid #e6ece8;
 }
 
 /* Card hover effects */
@@ -131,6 +161,10 @@
 
   .ant-statistic-content {
     font-size: 20px;
+  }
+
+  .home-hero {
+    padding: 16px;
   }
 }
 

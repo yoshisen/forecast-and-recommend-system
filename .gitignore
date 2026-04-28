@@ -1,4 +1,4 @@
-# .gitignore for Retail Analytics Project
+# Retail Analytics Project
 
 # Python
 __pycache__/
@@ -7,8 +7,8 @@ __pycache__/
 *.so
 .Python
 build/
-develop-eggs/
 dist/
+develop-eggs/
 downloads/
 eggs/
 .eggs/
@@ -22,68 +22,75 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
-dataanalysisproject/
+# 仮想環境
+.venv/
 venv/
 env/
 ENV/
-.venv/
+dataanalysisproject/
+backend/dataanalysisproject/
 
-# IDEs
+# テスト・カバレッジ
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage/
+
+# IDE / OS
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 .DS_Store
+Thumbs.db
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# Jupyter
+.ipynb_checkpoints/
 
-# pytest
-.pytest_cache/
-.coverage
-htmlcov/
+# ログ・一時ファイル
+*.log
+logs/
+*.tmp
+*.temp
+~$*
 
-# Data files
-data/uploaded/*.xlsx
-data/uploaded/*.csv
-data/processed/*.pkl
-data/models/*.pkl
-data/models/*.joblib
+# 環境変数
+.env
+.env.*
 
-# Keep directory structure
+# Node / Frontend
+node_modules/
+dist/
+.cache/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
+# 実行時データ（ルート）
+data/uploaded/*
+data/processed/*
+data/models/*
+
+# ディレクトリ構造の維持
 !data/uploaded/.gitkeep
 !data/processed/.gitkeep
 !data/models/.gitkeep
 
-# Logs
-*.log
-logs/
+# 実行時データ（backend）
+backend/data/uploaded/*
+backend/data/processed/*
+backend/data/models/*
 
-# Environment variables
-.env
-.env.local
-.env.production
-
-# Node
-node_modules/
-dist/
-.cache/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Build artifacts
-*.pyc
-*.pyo
-.build/
-
-# OS
-Thumbs.db
-.DS_Store
-
-# Temporary files
-*.tmp
-*.temp
-~$*
+# backend 側の .gitkeep を使う場合の保険
+!backend/data/uploaded/.gitkeep
+!backend/data/processed/.gitkeep
+!backend/data/models/.gitkeep

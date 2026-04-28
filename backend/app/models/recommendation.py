@@ -84,7 +84,7 @@ class CollaborativeFilter:
         return [(item, score) for item, score in top_items.items()]
     
     def _get_popular_items(self, top_k: int) -> List[Tuple[str, float]]:
-        """人気商品を取得（冷启动用）"""
+        """人気商品を取得（コールドスタート用）"""
         item_popularity = self.user_item_matrix.sum(axis=0).nlargest(top_k)
         return [(item, score) for item, score in item_popularity.items()]
 
@@ -158,6 +158,23 @@ class HybridRecommender:
         self.popular_items = []
         self.interaction_df = None
         self.product_df = None
+
+    @staticmethod
+    def _normalize_scores(sorted_recs: List[Tuple[str, float]]) -> Dict[str, float]:
+        if not sorted_recs:
+            return {}
+
+        scores = np.array([float(score) for _, score in sorted_recs], dtype=float)
+        max_score = float(np.max(scores))
+
+        if not np.isfinite(max_score) or max_score <= 0:
+            return {str(product_id): 0.0 for product_id, _ in sorted_recs}
+
+        normalized = np.clip(scores / max_score, 0.0, 1.0)
+        return {
+            str(product_id): float(norm_score)
+            for (product_id, _), norm_score in zip(sorted_recs, normalized)
+        }
     
     def fit(self, interaction_df: pd.DataFrame, product_df: pd.DataFrame):
         """学習"""
@@ -227,11 +244,16 @@ class HybridRecommender:
         
         # スコア順にソート
         sorted_recs = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)[:top_k]
+        normalized_map = self._normalize_scores(sorted_recs)
         
         # 商品情報を追加
         result = []
         for product_id, score in sorted_recs:
-            product_info = {'product_id': product_id, 'score': float(score)}
+            product_info = {
+                'product_id': product_id,
+                'score': float(normalized_map.get(str(product_id), 0.0)),
+                'raw_score': float(score),
+            }
             
             # 商品詳細を追加
             if self.product_df is not None and 'product_id' in self.product_df.columns:
@@ -250,7 +272,7 @@ class HybridRecommender:
         return result
     
     def recommend_popular(self, top_k: int = 10, store_id: Optional[str] = None) -> List[Dict[str, Any]]:
-        """人気商品推薦（冷启动用）"""
+        """人気商品推薦（コールドスタート用）"""
         if store_id and 'store_id' in self.interaction_df.columns:
             # 店舗別人気商品
             store_data = self.interaction_df[self.interaction_df['store_id'] == store_id]

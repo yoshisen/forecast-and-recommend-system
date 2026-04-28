@@ -1,42 +1,42 @@
-# 快速启动脚本（需要先cd到backend目录激活虚拟环境）
+# クイック起動スクリプト（事前に backend ディレクトリへ移動し、仮想環境を有効化してください）
 # Windows PowerShell
 
-Write-Host "🚀 启动 LUMI 零售分析平台 后端服务..." -ForegroundColor Cyan
+Write-Host "🚀 LUMI 小売分析プラットフォームのバックエンドを起動します..." -ForegroundColor Cyan
 Write-Host ""
 
-# 检查是否在backend目录
+# backend ディレクトリ上で実行されているか確認
 if (!(Test-Path "app")) {
-    Write-Host "❌ 错误: 请在backend目录下运行此脚本" -ForegroundColor Red
-    Write-Host "执行: cd backend" -ForegroundColor Yellow
+    Write-Host "❌ エラー: このスクリプトは backend ディレクトリで実行してください" -ForegroundColor Red
+    Write-Host "実行例: cd backend" -ForegroundColor Yellow
     exit 1
 }
 
-# 检查虚拟环境
+# 仮想環境を確認
 if (!(Test-Path "dataanalysisproject")) {
-    Write-Host "⚠️  虚拟环境不存在，正在创建..." -ForegroundColor Yellow
+    Write-Host "⚠️  仮想環境が見つからないため作成します..." -ForegroundColor Yellow
     python -m venv dataanalysisproject
-    Write-Host "✅ 虚拟环境创建完成" -ForegroundColor Green
+    Write-Host "✅ 仮想環境の作成が完了しました" -ForegroundColor Green
 }
 
-# 激活虚拟环境
-Write-Host "🔧 激活虚拟环境..." -ForegroundColor Yellow
+# 仮想環境を有効化
+Write-Host "🔧 仮想環境を有効化します..." -ForegroundColor Yellow
 .\dataanalysisproject\Scripts\Activate.ps1
 
-# 检查依赖
-Write-Host "📦 检查依赖包..." -ForegroundColor Yellow
+# 依存関係を確認
+Write-Host "📦 依存パッケージを確認します..." -ForegroundColor Yellow
 pip list | Select-String "fastapi" > $null
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "⚠️  依赖包未安装，正在安装..." -ForegroundColor Yellow
+    Write-Host "⚠️  依存パッケージが未インストールのため、インストールします..." -ForegroundColor Yellow
     pip install -r requirements.txt
 }
 
-# 启动服务器
+# サーバーを起動
 Write-Host ""
-Write-Host "🚀 启动 FastAPI 服务器..." -ForegroundColor Green
-Write-Host "📍 API 文档: http://localhost:8000/api/docs" -ForegroundColor Cyan
-Write-Host "📍 健康检查: http://localhost:8000/api/health" -ForegroundColor Cyan
+Write-Host "🚀 FastAPI サーバーを起動します..." -ForegroundColor Green
+Write-Host "📍 API ドキュメント: http://localhost:8000/api/docs" -ForegroundColor Cyan
+Write-Host "📍 ヘルスチェック: http://localhost:8000/api/health" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "按 Ctrl+C 停止服务器" -ForegroundColor Yellow
+Write-Host "Ctrl+C でサーバーを停止できます" -ForegroundColor Yellow
 Write-Host ""
 
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000

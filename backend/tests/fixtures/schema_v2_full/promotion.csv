@@ -1,0 +1,15 @@
+promotion_id,promotion_name,promotion_type,start_date,end_date,discount_rate,min_purchase_amount_jpy,max_discount_jpy,target_category_level1,target_store_id
+PR0001,New Year Essentials,seasonal,2025-01-01,2025-01-05,0.12,1500,1200,Daily_Necessities,S000001
+PR0002,Cold and Flu Focus,health,2025-01-10,2025-02-15,0.14,1200,1000,OTC_Medicine,S000001
+PR0003,Pollen Guard,seasonal,2025-02-20,2025-04-10,0.13,1300,1000,OTC_Medicine,S000001
+PR0004,Spring Skin Care,beauty,2025-03-15,2025-04-30,0.11,1800,1300,Skincare,S000001
+PR0005,Golden Week Family,seasonal,2025-04-26,2025-05-06,0.1,2200,1600,Baby_Care,S000001
+PR0006,UV Beauty Campaign,beauty,2025-05-20,2025-07-15,0.12,2000,1400,Cosmetics,S000001
+PR0007,Rainy Season Hygiene,seasonal,2025-06-10,2025-07-05,0.1,1200,800,Hygiene,S000001
+PR0008,Summer Hydration,seasonal,2025-07-20,2025-08-31,0.08,1000,600,Beverage,S000001
+PR0009,Obon Home Stockup,seasonal,2025-08-09,2025-08-18,0.09,1800,1200,Daily_Necessities,S000001
+PR0010,Autumn Immunity,health,2025-09-10,2025-10-15,0.11,1800,1200,Supplements,S000001
+PR0011,Sports Recovery,lifestyle,2025-10-01,2025-10-31,0.09,1400,900,Supplements,S000001
+PR0012,Dry Skin Rescue,beauty,2025-11-01,2025-12-10,0.13,1800,1300,Skincare,S000001
+PR0013,Year End Household,seasonal,2025-12-15,2025-12-31,0.12,1800,1400,Daily_Necessities,S000001
+PR0014,Holiday Snack Week,seasonal,2025-12-20,2025-12-31,0.08,900,500,Snack,S000001

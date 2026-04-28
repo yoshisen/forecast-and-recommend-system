@@ -2,7 +2,6 @@
 Application configuration and settings
 """
 from pydantic_settings import BaseSettings
-from typing import Optional
 import os
 from pathlib import Path
 
@@ -21,7 +20,7 @@ class Settings(BaseSettings):
     PROCESSED_DIR: Path = Path("data/processed")
     MODELS_DIR: Path = Path("data/models")
     MAX_UPLOAD_SIZE: int = 100 * 1024 * 1024  # 100MB
-    ALLOWED_EXTENSIONS: set = {".xlsx", ".xls"}
+    ALLOWED_EXTENSIONS: set = {".xlsx", ".xls", ".csv", ".zip"}
     
     # Data Processing
     CHUNK_SIZE: int = 50000  # For large file processing

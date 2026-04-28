@@ -1,121 +1,268 @@
-# リテール分析 & ML プラットフォーム
+# 小売分析・MLプラットフォーム（現行実装, 2026-04）
 
-現在このプロジェクトは **Excel (複数シート) データアップロード → 自動特徴生成 → 販売予測 / 商品推薦モデル訓練 → ダッシュボードで進捗と結果確認** までをカバーしています。
+本リポジトリは、フロントエンドとバックエンドを統合した実行可能な分析基盤です。
+現在の主フローは次の通りです。
 
-> 「自然言語での質問による分析」はまだ実装されていません（ロードマップ段階）。現状は構造化データを使った予測・推薦の検証用 UI です。
+データアップロード（.xlsx/.xls/.csv/.zip） -> 自動解析と品質チェック -> フィールド適合性チェック -> 自動/手動学習（6タスク） -> Dashboard/Homeで状態確認 -> 各ページ/APIで推論
 
-## 自然言語Q&A について (実装予定)
-アップロード済みデータに対して **日本語の自然言語で質問し、集計・傾向分析・可視化（グラフ生成）を自動で返す** 機能は初期コンセプトに含まれていました。現在は未実装ですが、以下のような質問例に対応できるよう今後拡張予定です。
+## 1. 現在実装済みの機能
 
-例: 
-- 「月別売上傾向グラフを描いてください」
-- 「一番売れている商品は？」
-- 「ユーザー成長が最も速い月は？」
-- 「地域ごとの注文数を集計してください」
+- アップロードと解析
+  - `.xlsx` / `.xls` / `.csv` / `.zip` に対応
+  - 複数 `.csv` の同時アップロードに対応
+  - CSV は「1ファイル = 1 Sheet」として解析
+  - ZIP は複数 CSV を一括取込し、未認識ファイルには候補 Sheet 名を返却
+- データガバナンス
+  - 列名正規化、型推定、関連整合チェック
+  - 品質レポート（欠損・重複・範囲など）
+  - タスク別フィールド readiness（`reason_code` / `reason_ja`）
+- 学習と推論
+  - Forecast
+  - Recommend
+  - Classification
+  - Association
+  - Clustering
+  - TimeSeries (Prophet)
+- 学習状態管理
+  - アップロード後の自動学習スケジューリング
+  - 手動再学習
+  - WebSocket: `/api/v1/ws/training`
+- フロントエンド画面（ルーティング接続済み）
+  - Home
+  - Upload
+  - Upload Schema Guide
+  - Dashboard
+  - Forecast
+  - Recommend
+  - Classification
+  - Association
+  - Clustering
+  - TimeSeries
 
-予定アプローチ (案):
-- 質問 → 意図解析 (集計指標 / 次元 / フィルタ抽出)
-- セマンティック辞書 + 列名マッピング (日本語 → 内部標準カラム)
-- クエリプラン生成 (pandas / DuckDB / SQL いずれか) → 実行
-- 結果 DataFrame を自動チャート化（種類推論: 折れ線 / 棒 / 円 / ヒートマップ 等）
-- 応答キャッシュ & 再質問コンテキスト保持
+## 2. 現時点の制約と注意点
 
-現段階では UI / API の土台のみのため、このセクションは将来開発のプレースホルダです。
+- バージョン情報とモデル状態はプロセスメモリ保持のため、再起動で消失します。
+- 認証・認可は未実装です。
+- Dockerfile / docker-compose / systemd / NSSM は同梱していません。
+- `backend/main.py` は過去の実験用エントリで、主系では利用しません。
+- TimeSeries は `prophet` に依存し、未導入環境では関連テストが条件付きスキップされます。
+- `start.ps1` / `start.bat` は依存インストールを行いません（起動のみ）。
 
-## 主な機能 (現状)
-- Excel ファイルアップロード (複数シート識別 / 標準化 / 品質レポート)
-- 自動/手動の販売予測モデル訓練 (LightGBM + ベースライン)
-- 自動/手動の商品推薦モデル訓練 (協同フィルタリング + コンテンツベースハイブリッド)
-- WebSocket によるリアルタイム訓練進捗更新 (段階的パーセンテージ)
-- 失敗時の詳細ログ表示（スタックトレース展開）
-- バージョン管理（アップロード毎に version ID 発行）
+## 3. Windows での起動
 
-## これから対応予定 (Roadmap)
-- 自然言語質問 → メトリック抽出 / グラフ生成
-- モデル永続化 (ファイル保存 / バージョン間ロード)
-- 認証 / 権限管理
-- 高度特徴 (レビュー感情 / 商品関連 / 顧客行動シート統合)
-- WebSocket 再接続バックオフ強化（部分実装予定）
+### 3.1 前提
 
-## 技術スタック
-- フロントエンド: React + Ant Design + Vite
-- スタイル: Tailwind (一部) / Ant Design コンポーネント
-- バックエンド: FastAPI (Python) + Pydantic v2
-- モデル: LightGBM / 協同フィルタリング (pivot + cosine) / コンテンツ類似 (カテゴリ + 価格正規化)
-- データ処理: pandas
+- Python 3.11+
+- Node.js 18+
 
-## Excel スキーマ要件
-アップロードする Excel のシート名と列名仕様は `UPLOAD_SCHEMA.md` を参照してください。最低限必要:
-```
-トランザクション明細 (transaction_items)
-トランザクション (transaction)
-商品 (product)
-```
-推奨追加 (精度向上): 顧客, 店舗, プロモーション, 祝日, 天気, 在庫
+初回は依存をインストールしてください。
 
-## セットアップ手順
-```bash
-# フロントエンド依存
+```powershell
+# backend
+cd backend
+python -m venv dataanalysisproject
+.\dataanalysisproject\Scripts\Activate.ps1
+pip install -r requirements.txt
+
+# frontend（プロジェクトルート）
+cd ..
 npm install
-
-# バックエンド依存
-pip install -r backend/requirements.txt
-
-# 開発サーバー起動 (フロント)
-npm run dev  # http://localhost:5173
-
-# FastAPI バックエンド起動 (PowerShell)
-python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
-※ Node.js 未導入の場合 https://nodejs.org/ からインストール。
 
-## 使用フロー
-1. 小規模テストデータ作成（任意）: `python generate_supermarket_data_small.py data/uploaded/small_test.xlsx`
-2. フロントのアップロード画面でファイル選択 → 解析完了後自動で Dashboard に遷移
-3. 自動訓練進捗（予測 / 推薦）がリアルタイム更新されることを確認
-4. 失敗時は「詳細ログを見る」でスタックトレース確認 → 再訓練
-5. 予測 API / 推薦 API を叩いて結果確認（将来フロント画面強化予定）
+### 3.2 ワンクリック起動（ルート）
 
-## ディレクトリ構成 (抜粋)
+```powershell
+.\start.ps1
 ```
+
+または
+
+```bat
+start.bat
+```
+
+### 3.3 バックエンドのみ起動
+
+```powershell
+cd backend
+.\start_backend.ps1
+```
+
+### 3.4 手動起動（推奨）
+
+```powershell
+# Terminal A: backend
+cd backend
+.\dataanalysisproject\Scripts\Activate.ps1
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Terminal B: frontend
+cd ..
+npm run dev
+```
+
+### 3.5 アクセス先
+
+- フロントエンド: `http://localhost:5173`
+- Swagger: `http://localhost:8000/api/docs`
+- ヘルスチェック: `http://localhost:8000/api/health`
+
+## 4. API 一覧（現行ルーティング）
+
+プレフィックス: `/api/v1`
+
+### 4.1 Data / Upload
+
+- `POST /upload`
+- `GET /data/summary`
+- `GET /data/quality`
+- `GET /data/readiness`
+- `GET /data/upload-schema`
+- `GET /data/field-readiness`
+- `GET /data/samples`
+- `GET /data/forecast-total`
+- `GET /versions`
+
+### 4.2 Forecast
+
+- `GET /forecast`
+- `POST /forecast/batch`
+- `POST /forecast/train`
+
+### 4.3 Recommend
+
+- `GET /recommend`
+- `GET /recommend/popular`
+- `POST /recommend/train`
+
+### 4.4 Classification
+
+- `POST /classification/train`
+- `GET /classification/predict`
+- `POST /classification/predict/features`
+- `GET /classification/threshold-scan`
+- `POST /classification/tune-threshold`
+
+### 4.5 Association
+
+- `POST /association/train`
+- `GET /association/rules`
+- `GET /association/recommendations`
+
+### 4.6 Clustering
+
+- `POST /clustering/train`
+- `GET /clustering/segments`
+- `GET /clustering/points`
+- `GET /clustering/customer/{customer_id}`
+
+### 4.7 TimeSeries
+
+- `POST /timeseries/train`
+- `GET /timeseries/forecast`
+
+共通:
+
+- `GET /`
+- `GET /api/health`
+- `WS /api/v1/ws/training`
+
+## 5. アップロードと学習の重要制約
+
+- 対応形式: `.xlsx` / `.xls` / `.csv` / `.zip`
+- 複数 `.csv` を同時アップロード可能（同一リクエスト内で統合解析）
+- CSV ファイル名は標準 Sheet 名を含めることを推奨（例: `transaction_items.csv`）
+- ZIP の未認識ファイルは warning に以下を返却
+  - `zip_skipped_files`
+  - `suggested_sheet_names_by_file`
+
+主要機能を一度に検証する推奨セット:
+
+- `transaction_items.csv`
+- `transaction.csv`
+- `product.csv`
+- `customer.csv`
+
+タスク別の最低 Sheet 要件:
+
+- forecast: `transaction_items + transaction + product`
+- recommend: `transaction_items + transaction + customer + product`
+- classification: `transaction_items + transaction + customer`
+- association: `transaction_items + transaction + product`
+- clustering: `transaction_items + transaction + customer`
+- prophet(timeseries): `transaction_items + transaction + product`
+
+## 6. テストと回帰
+
+### 6.1 バックエンド
+
+```powershell
+cd backend
+pytest
+```
+
+`backend/tests/` には以下を含むテストが実装済みです。
+
+- モジュールの成功/失敗パス
+- upload warning 契約
+- train エンドポイント行列
+- CSV/ZIP アップロード回帰
+- 全体 CSV データセットの統合テスト
+
+### 6.2 フロントエンド
+
+```powershell
+npm run test
+```
+
+Upload/Dashboard/Forecast/Recommend/Classification/Association/Clustering/TimeSeries の主要経路をカバーします。
+
+### 6.3 E2E
+
+```powershell
+npm run e2e
+```
+
+初回はブラウザをインストールしてください。
+
+```powershell
+npm run e2e:install
+```
+
+### 6.4 フィクスチャ生成
+
+`backend/tests/fixtures/schema_v2_full/generate_schema_v2_csv.py` は、既定で 12 CSV・各 20000 行を生成し、高負荷回帰に利用できます。
+
+## 7. ディレクトリ構成（抜粋）
+
+```text
 dataAnalysisProject/
 ├─ backend/
 │  ├─ app/
-│  │  ├─ api/v1/ (data, forecast, recommend ルーター)
-│  │  ├─ core/ (excel_parser, feature_engine, training_events など)
-│  │  ├─ models/ (forecasting, recommendation)
-│  │  ├─ schemas/ (Pydantic スキーマ)
-│  ├─ main.py (FastAPI アプリ本体)
+│  │  ├─ api/v1/            # data / forecast / recommend / classification / association / clustering / timeseries
+│  │  ├─ core/              # parser / quality / feature_engine / training_events / task_registry
+│  │  ├─ models/            # forecasting / recommendation / classification / clustering / association / timeseries
+│  │  ├─ schemas/
+│  │  └─ main.py            # 主 FastAPI エントリ
+│  ├─ tests/
+│  ├─ main.py               # 実験用旧エントリ（/analyze）
 │  └─ requirements.txt
 ├─ src/
-│  ├─ pages/ (UploadPage, Dashboard, ForecastPage, RecommendPage)
-│  ├─ components/ (ErrorBoundary, DataAnalysisAssistant 等)
-│  ├─ services/ (API 通信ラッパ)
-│  ├─ App.jsx / main.jsx
-├─ generate_supermarket_data_small.py (軽量データ生成)
-├─ UPLOAD_SCHEMA.md (Excel スキーマ仕様)
-├─ README.md
+│  ├─ pages/                # Home / Upload / Dashboard / Forecast / Recommend / Classification / Association / Clustering / TimeSeries
+│  ├─ components/
+│  └─ services/api.js
+├─ e2e/
+├─ DEPLOY.md
+├─ UPLOAD_SCHEMA.md
+└─ TEST_PLAN.md
 ```
 
-## 既知の制限 / 注意
-| 項目 | 状態 |
-|------|------|
-| 自然言語クエリ | 未実装 |
-| モデル永続化 | 未実装（メモリ内のみ） |
-| WebSocket 再接続 | 単純 (1 回接続 → 切れたらポーリングへ) |
-| 認証 | 無し |
-| 大規模データ (> 数百万行) | メモリ最適化未調整 |
+## 8. ドキュメント索引
 
-## トラブルシューティング抜粋
-| 症状 | 原因 | 対処 |
-|------|------|------|
-| 訓練が失敗し datetime64 sum error | 数値列が日付誤認識 | 最新パーサ使用 / 列名見直し |
-| 進捗が 0% のまま | 必須シート不足 | `UPLOAD_SCHEMA.md` を確認 |
-| 失敗後再訓練ボタンが効かない | 前回エラー状態残留 | リロード / 解析ログ確認 |
-| 推薦結果が少ない | 期間短い / 顧客少ない | データ期間延長 / customer シート追加 |
+- `DEPLOY.md`: デプロイと起動
+- `UPLOAD_SCHEMA.md`: アップロードスキーマ規約と拡張方針
+- `TEST_PLAN.md`: テスト計画と回帰指針
 
-## ライセンス
+## 9. ライセンス
+
 Apache-2.0
-
----
-今後の機能拡張に合わせ随時更新します。改善提案歓迎。

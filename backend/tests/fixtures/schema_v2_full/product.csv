@@ -1,0 +1,151 @@
+product_id,product_name,brand,category_level1,category_level2,category_level3,retail_price_jpy,cost_price_jpy,unit_of_measure,package_size,weight_g,supplier_id,shelf_life_days,perishable_flag,seasonal_flag,organic_flag,private_label_flag,launch_date
+P000001,LUKE Cold Relief Tablets 24,LUKE Select,OTC_Medicine,ColdFlu,ColdFlu_Tablet,1480,890,pack,24tabs,54,SUP001,730,0,1,0,1,2024-09-01
+P000002,ColdFlu Item 02,PureOne,OTC_Medicine,ColdFlu,ColdFlu_Type1,1740,988,piece,3pack,351,SUP014,833,0,0,0,0,2022-04-06
+P000003,ColdFlu Item 03,LUKE Select,OTC_Medicine,ColdFlu,ColdFlu_Type4,1160,700,piece,1pack,253,SUP004,992,0,0,0,0,2022-10-14
+P000004,ColdFlu Item 04,PureOne,OTC_Medicine,ColdFlu,ColdFlu_Type4,1320,769,piece,2pack,235,SUP017,1189,0,0,0,1,2025-05-20
+P000005,ColdFlu Item 05,MediTrust,OTC_Medicine,ColdFlu,ColdFlu_Type4,1140,652,piece,1pack,725,SUP003,680,0,0,0,0,2023-06-23
+P000006,ColdFlu Item 06,DailyFit,OTC_Medicine,ColdFlu,ColdFlu_Type3,2050,1126,piece,4pack,1079,SUP013,223,0,0,0,0,2024-11-27
+P000007,ColdFlu Item 07,NeoWell,OTC_Medicine,ColdFlu,ColdFlu_Type2,800,459,piece,2pack,346,SUP014,317,0,0,0,0,2023-10-29
+P000008,ColdFlu Item 08,AquaSkin,OTC_Medicine,ColdFlu,ColdFlu_Type3,1940,1224,piece,2pack,312,SUP018,968,0,0,0,1,2022-06-15
+P000009,ColdFlu Item 09,LUKE Select,OTC_Medicine,ColdFlu,ColdFlu_Type1,900,573,piece,3pack,90,SUP011,1153,0,0,0,0,2024-10-26
+P000010,ColdFlu Item 10,NeoWell,OTC_Medicine,ColdFlu,ColdFlu_Type4,1500,881,piece,2pack,159,SUP008,633,0,0,0,0,2024-10-17
+P000011,ColdFlu Item 11,DailyFit,OTC_Medicine,ColdFlu,ColdFlu_Type3,940,575,piece,1pack,230,SUP016,893,0,0,1,0,2024-12-11
+P000012,ColdFlu Item 12,NeoWell,OTC_Medicine,ColdFlu,ColdFlu_Type4,1680,1076,piece,4pack,506,SUP004,647,0,0,0,0,2023-12-02
+P000013,ColdFlu Item 13,LUKE Select,OTC_Medicine,ColdFlu,ColdFlu_Type1,1280,822,piece,3pack,516,SUP014,366,0,0,0,0,2022-05-16
+P000014,ColdFlu Item 14,LifeRoot,OTC_Medicine,ColdFlu,ColdFlu_Type2,2390,1481,piece,3pack,541,SUP009,662,0,0,0,0,2024-11-12
+P000015,ColdFlu Item 15,MediTrust,OTC_Medicine,ColdFlu,ColdFlu_Type4,1320,781,piece,1pack,991,SUP002,674,0,0,1,0,2025-03-04
+P000016,ColdFlu Item 16,LifeRoot,OTC_Medicine,ColdFlu,ColdFlu_Type4,730,435,piece,5pack,447,SUP017,1154,0,0,0,0,2023-01-27
+P000017,ColdFlu Item 17,AquaSkin,OTC_Medicine,ColdFlu,ColdFlu_Type1,930,565,piece,4pack,776,SUP006,775,0,0,0,0,2024-07-07
+P000018,ColdFlu Item 18,DailyFit,OTC_Medicine,ColdFlu,ColdFlu_Type1,2360,1543,piece,1pack,1016,SUP011,1168,0,0,0,0,2022-10-31
+P000019,Allergy Item 01,LUKE Select,OTC_Medicine,Allergy,Allergy_Type2,940,561,piece,4pack,504,SUP017,266,0,1,0,0,2022-02-02
+P000020,Allergy Item 02,PureOne,OTC_Medicine,Allergy,Allergy_Type3,830,475,piece,3pack,93,SUP018,407,0,1,0,1,2024-12-31
+P000021,Allergy Item 03,DailyFit,OTC_Medicine,Allergy,Allergy_Type2,1740,976,piece,4pack,700,SUP002,766,0,1,0,0,2023-10-17
+P000022,Allergy Item 04,MediTrust,OTC_Medicine,Allergy,Allergy_Type2,1460,895,piece,3pack,645,SUP009,159,0,1,0,1,2025-03-10
+P000023,Allergy Item 05,LUKE Select,OTC_Medicine,Allergy,Allergy_Type4,2600,1519,piece,4pack,672,SUP006,1073,0,1,0,0,2022-04-06
+P000024,Allergy Item 06,MediTrust,OTC_Medicine,Allergy,Allergy_Type4,1250,689,piece,4pack,318,SUP001,1125,0,1,0,1,2024-07-21
+P000025,Allergy Item 07,LUKE Select,OTC_Medicine,Allergy,Allergy_Type1,2980,1874,piece,3pack,850,SUP017,1028,0,1,0,1,2022-01-10
+P000026,Allergy Item 08,SoraCare,OTC_Medicine,Allergy,Allergy_Type4,2140,1320,piece,2pack,1139,SUP002,843,0,1,0,0,2025-04-02
+P000027,Allergy Item 09,SoraCare,OTC_Medicine,Allergy,Allergy_Type3,2720,1583,piece,3pack,1073,SUP020,829,0,1,0,0,2023-06-28
+P000028,Allergy Item 10,SoraCare,OTC_Medicine,Allergy,Allergy_Type1,2680,1731,piece,4pack,165,SUP012,330,0,1,0,0,2025-06-06
+P000029,FacialCare Item 01,LUKE Select,Skincare,FacialCare,FacialCare_Type3,2980,1686,piece,3pack,169,SUP002,425,0,1,0,0,2023-06-01
+P000030,FacialCare Item 02,MediTrust,Skincare,FacialCare,FacialCare_Type2,1230,643,piece,1pack,238,SUP008,228,0,1,0,1,2024-03-16
+P000031,FacialCare Item 03,MediTrust,Skincare,FacialCare,FacialCare_Type1,1080,601,piece,4pack,793,SUP014,918,0,1,0,0,2023-05-21
+P000032,FacialCare Item 04,NeoWell,Skincare,FacialCare,FacialCare_Type3,2370,1463,piece,5pack,914,SUP020,1133,0,1,0,0,2023-12-30
+P000033,FacialCare Item 05,SoraCare,Skincare,FacialCare,FacialCare_Type4,1850,974,piece,4pack,468,SUP001,654,0,1,0,0,2022-10-24
+P000034,FacialCare Item 06,MediTrust,Skincare,FacialCare,FacialCare_Type2,1790,935,piece,2pack,662,SUP019,129,0,1,0,1,2024-11-11
+P000035,FacialCare Item 07,DailyFit,Skincare,FacialCare,FacialCare_Type1,2000,1071,piece,3pack,320,SUP012,598,0,1,0,0,2022-09-20
+P000036,FacialCare Item 08,LifeRoot,Skincare,FacialCare,FacialCare_Type4,1110,598,piece,2pack,492,SUP001,852,0,1,0,1,2023-12-16
+P000037,FacialCare Item 09,MediTrust,Skincare,FacialCare,FacialCare_Type2,1430,741,piece,4pack,483,SUP014,543,0,1,0,0,2025-08-20
+P000038,FacialCare Item 10,LifeRoot,Skincare,FacialCare,FacialCare_Type2,1650,951,piece,2pack,1126,SUP015,976,0,1,0,1,2023-09-08
+P000039,FacialCare Item 11,LifeRoot,Skincare,FacialCare,FacialCare_Type3,1460,773,piece,1pack,840,SUP012,992,0,1,1,0,2025-08-15
+P000040,FacialCare Item 12,PureOne,Skincare,FacialCare,FacialCare_Type2,2110,1063,piece,3pack,571,SUP006,1102,0,1,0,0,2025-05-18
+P000041,FacialCare Item 13,PureOne,Skincare,FacialCare,FacialCare_Type2,1990,1167,piece,5pack,270,SUP005,712,0,1,0,1,2025-03-10
+P000042,FacialCare Item 14,AquaSkin,Skincare,FacialCare,FacialCare_Type4,950,522,piece,4pack,569,SUP011,318,0,1,0,0,2024-01-02
+P000043,FacialCare Item 15,LifeRoot,Skincare,FacialCare,FacialCare_Type4,2960,1757,piece,2pack,798,SUP011,1098,0,1,0,0,2025-09-23
+P000044,FacialCare Item 16,PureOne,Skincare,FacialCare,FacialCare_Type1,2360,1315,piece,4pack,1182,SUP001,282,0,1,0,0,2023-04-10
+P000045,Makeup Item 01,PureOne,Cosmetics,Makeup,Makeup_Type2,1290,740,piece,1pack,294,SUP017,325,0,1,0,1,2024-11-07
+P000046,Makeup Item 02,NeoWell,Cosmetics,Makeup,Makeup_Type4,1340,681,piece,1pack,144,SUP019,472,0,1,0,1,2023-11-20
+P000047,Makeup Item 03,DailyFit,Cosmetics,Makeup,Makeup_Type2,2210,1240,piece,5pack,527,SUP012,692,0,1,0,0,2022-07-08
+P000048,Makeup Item 04,PureOne,Cosmetics,Makeup,Makeup_Type3,1490,733,piece,4pack,1059,SUP004,550,0,1,0,0,2023-03-24
+P000049,Makeup Item 05,PureOne,Cosmetics,Makeup,Makeup_Type4,3420,1829,piece,2pack,849,SUP017,856,0,1,0,1,2023-08-25
+P000050,Makeup Item 06,DailyFit,Cosmetics,Makeup,Makeup_Type1,3360,1831,piece,4pack,381,SUP016,152,0,1,0,0,2022-04-05
+P000051,Makeup Item 07,SoraCare,Cosmetics,Makeup,Makeup_Type1,2100,1187,piece,5pack,408,SUP001,790,0,1,0,0,2024-10-24
+P000052,Makeup Item 08,LifeRoot,Cosmetics,Makeup,Makeup_Type3,1650,837,piece,1pack,990,SUP017,923,0,1,0,0,2023-11-03
+P000053,Makeup Item 09,AquaSkin,Cosmetics,Makeup,Makeup_Type3,2310,1320,piece,4pack,1116,SUP003,413,0,1,0,1,2024-03-06
+P000054,Makeup Item 10,NeoWell,Cosmetics,Makeup,Makeup_Type4,1620,799,piece,6pack,1175,SUP003,1138,0,1,1,0,2024-05-27
+P000055,Makeup Item 11,AquaSkin,Cosmetics,Makeup,Makeup_Type1,1030,584,piece,5pack,374,SUP003,1109,0,1,0,0,2023-10-06
+P000056,Makeup Item 12,NeoWell,Cosmetics,Makeup,Makeup_Type4,2220,1217,piece,1pack,549,SUP006,873,0,1,0,1,2023-09-17
+P000057,Makeup Item 13,LifeRoot,Cosmetics,Makeup,Makeup_Type2,2870,1378,piece,3pack,580,SUP001,87,0,1,0,0,2023-08-30
+P000058,Makeup Item 14,DailyFit,Cosmetics,Makeup,Makeup_Type1,3070,1802,piece,5pack,313,SUP016,1125,0,1,0,1,2022-11-21
+P000059,Dental Item 01,AquaSkin,Oral_Care,Dental,Dental_Type1,610,340,piece,1pack,1119,SUP002,296,0,0,0,0,2024-11-08
+P000060,Dental Item 02,PureOne,Oral_Care,Dental,Dental_Type1,330,178,piece,1pack,964,SUP012,793,0,0,0,0,2023-11-13
+P000061,Dental Item 03,DailyFit,Oral_Care,Dental,Dental_Type2,450,234,piece,2pack,715,SUP001,778,0,0,0,0,2023-03-06
+P000062,Dental Item 04,MediTrust,Oral_Care,Dental,Dental_Type4,1040,588,piece,3pack,666,SUP016,747,0,0,0,0,2022-03-09
+P000063,Dental Item 05,AquaSkin,Oral_Care,Dental,Dental_Type4,350,167,piece,4pack,113,SUP014,395,0,0,0,0,2023-10-25
+P000064,Dental Item 06,AquaSkin,Oral_Care,Dental,Dental_Type2,910,436,piece,3pack,1064,SUP018,265,0,0,0,0,2024-06-23
+P000065,Dental Item 07,MediTrust,Oral_Care,Dental,Dental_Type3,240,116,piece,1pack,88,SUP020,812,0,0,0,1,2023-06-06
+P000066,Dental Item 08,PureOne,Oral_Care,Dental,Dental_Type1,1110,607,piece,4pack,59,SUP020,793,0,0,0,0,2022-03-15
+P000067,Dental Item 09,MediTrust,Oral_Care,Dental,Dental_Type2,750,405,piece,6pack,736,SUP012,86,0,0,0,0,2023-04-05
+P000068,Dental Item 10,NeoWell,Oral_Care,Dental,Dental_Type3,1230,670,piece,6pack,1012,SUP012,73,0,0,0,1,2025-03-16
+P000069,Dental Item 11,LifeRoot,Oral_Care,Dental,Dental_Type2,1140,588,piece,1pack,243,SUP019,805,0,0,0,1,2023-06-29
+P000070,Dental Item 12,AquaSkin,Oral_Care,Dental,Dental_Type1,360,178,piece,6pack,510,SUP008,219,0,0,0,1,2023-03-12
+P000071,Shampoo Item 01,DailyFit,Hair_Care,Shampoo,Shampoo_Type1,1140,570,piece,4pack,612,SUP004,603,0,0,0,0,2023-11-23
+P000072,Shampoo Item 02,MediTrust,Hair_Care,Shampoo,Shampoo_Type3,1350,662,piece,3pack,1088,SUP007,910,0,0,0,0,2024-03-01
+P000073,Shampoo Item 03,SoraCare,Hair_Care,Shampoo,Shampoo_Type3,540,273,piece,5pack,916,SUP018,358,0,0,0,0,2023-02-18
+P000074,Shampoo Item 04,LifeRoot,Hair_Care,Shampoo,Shampoo_Type1,1220,696,piece,3pack,337,SUP014,297,0,0,0,1,2023-01-24
+P000075,Shampoo Item 05,SoraCare,Hair_Care,Shampoo,Shampoo_Type1,1080,625,piece,4pack,44,SUP004,261,0,0,0,0,2022-06-14
+P000076,Shampoo Item 06,LUKE Select,Hair_Care,Shampoo,Shampoo_Type2,510,271,piece,3pack,470,SUP011,673,0,0,1,0,2022-04-12
+P000077,Shampoo Item 07,SoraCare,Hair_Care,Shampoo,Shampoo_Type1,560,290,piece,4pack,363,SUP018,349,0,0,0,0,2024-07-27
+P000078,Shampoo Item 08,DailyFit,Hair_Care,Shampoo,Shampoo_Type2,1230,709,piece,6pack,224,SUP002,85,0,0,0,1,2024-05-30
+P000079,Shampoo Item 09,SoraCare,Hair_Care,Shampoo,Shampoo_Type1,1230,676,piece,1pack,257,SUP018,468,0,0,0,1,2023-06-07
+P000080,Shampoo Item 10,LifeRoot,Hair_Care,Shampoo,Shampoo_Type3,600,352,piece,1pack,1070,SUP003,298,0,0,0,0,2024-03-19
+P000081,Shampoo Item 11,NeoWell,Hair_Care,Shampoo,Shampoo_Type1,720,365,piece,2pack,668,SUP005,981,0,0,0,0,2025-06-25
+P000082,Shampoo Item 12,DailyFit,Hair_Care,Shampoo,Shampoo_Type1,790,388,piece,2pack,736,SUP015,281,0,0,0,1,2022-03-05
+P000083,Diaper Item 01,LUKE Select,Baby_Care,Diaper,Diaper_Type2,3920,2553,piece,6pack,1044,SUP014,1019,0,0,0,0,2022-08-31
+P000084,Diaper Item 02,PureOne,Baby_Care,Diaper,Diaper_Type1,1730,1012,piece,5pack,1001,SUP008,589,0,0,0,0,2025-10-06
+P000085,Diaper Item 03,PureOne,Baby_Care,Diaper,Diaper_Type4,1860,1277,piece,6pack,630,SUP001,137,0,0,0,0,2025-02-20
+P000086,Diaper Item 04,MediTrust,Baby_Care,Diaper,Diaper_Type3,2060,1199,piece,6pack,643,SUP016,1084,0,0,0,0,2025-05-13
+P000087,Diaper Item 05,LifeRoot,Baby_Care,Diaper,Diaper_Type1,3220,2060,piece,2pack,98,SUP005,122,0,0,0,0,2022-03-06
+P000088,Diaper Item 06,DailyFit,Baby_Care,Diaper,Diaper_Type2,1560,1047,piece,6pack,279,SUP020,212,0,0,0,0,2023-02-20
+P000089,Diaper Item 07,MediTrust,Baby_Care,Diaper,Diaper_Type2,2550,1749,piece,3pack,386,SUP012,171,0,0,0,1,2022-08-05
+P000090,Diaper Item 08,AquaSkin,Baby_Care,Diaper,Diaper_Type3,2940,1957,piece,3pack,959,SUP007,534,0,0,0,1,2025-03-10
+P000091,Diaper Item 09,NeoWell,Baby_Care,Diaper,Diaper_Type3,1460,1001,piece,6pack,79,SUP005,684,0,0,0,0,2023-12-24
+P000092,Diaper Item 10,PureOne,Baby_Care,Diaper,Diaper_Type1,2200,1308,piece,6pack,63,SUP019,212,0,0,0,0,2025-05-23
+P000093,Vitamins Item 01,LUKE Select,Supplements,Vitamins,Vitamins_Type4,2370,1465,piece,5pack,137,SUP012,281,0,0,0,0,2023-03-04
+P000094,Vitamins Item 02,LifeRoot,Supplements,Vitamins,Vitamins_Type3,670,349,piece,1pack,1126,SUP013,432,0,0,0,0,2024-02-27
+P000095,Vitamins Item 03,DailyFit,Supplements,Vitamins,Vitamins_Type2,830,517,piece,1pack,732,SUP004,758,0,0,0,0,2023-02-14
+P000096,Vitamins Item 04,AquaSkin,Supplements,Vitamins,Vitamins_Type2,1140,639,piece,1pack,889,SUP020,290,0,0,0,0,2025-09-19
+P000097,Vitamins Item 05,DailyFit,Supplements,Vitamins,Vitamins_Type4,1940,1181,piece,4pack,707,SUP009,343,0,0,0,0,2023-03-28
+P000098,Vitamins Item 06,MediTrust,Supplements,Vitamins,Vitamins_Type1,1270,716,piece,5pack,866,SUP020,1046,0,0,0,1,2023-11-27
+P000099,Vitamins Item 07,DailyFit,Supplements,Vitamins,Vitamins_Type2,1850,969,piece,5pack,865,SUP013,951,0,0,0,1,2024-12-30
+P000100,Vitamins Item 08,PureOne,Supplements,Vitamins,Vitamins_Type3,870,471,piece,6pack,321,SUP018,1090,0,0,0,0,2023-01-14
+P000101,Vitamins Item 09,LifeRoot,Supplements,Vitamins,Vitamins_Type3,1080,634,piece,4pack,843,SUP011,976,0,0,0,0,2023-05-01
+P000102,Vitamins Item 10,PureOne,Supplements,Vitamins,Vitamins_Type2,820,450,piece,4pack,750,SUP005,331,0,0,0,1,2023-01-04
+P000103,Vitamins Item 11,NeoWell,Supplements,Vitamins,Vitamins_Type4,1770,936,piece,4pack,95,SUP005,895,0,0,0,1,2023-09-30
+P000104,Vitamins Item 12,LifeRoot,Supplements,Vitamins,Vitamins_Type1,2070,1293,piece,5pack,879,SUP003,285,0,0,0,0,2025-01-11
+P000105,Vitamins Item 13,LifeRoot,Supplements,Vitamins,Vitamins_Type2,1370,750,piece,5pack,302,SUP017,1065,0,0,0,0,2023-05-05
+P000106,Vitamins Item 14,MediTrust,Supplements,Vitamins,Vitamins_Type2,1650,863,piece,5pack,752,SUP014,412,0,0,0,0,2024-02-28
+P000107,Household Item 01,DailyFit,Daily_Necessities,Household,Household_Type2,710,369,piece,4pack,544,SUP002,617,0,0,0,0,2023-05-16
+P000108,Household Item 02,DailyFit,Daily_Necessities,Household,Household_Type4,800,439,piece,6pack,717,SUP009,748,0,0,0,1,2023-07-25
+P000109,Household Item 03,AquaSkin,Daily_Necessities,Household,Household_Type4,420,220,piece,1pack,114,SUP001,442,0,0,0,0,2023-12-04
+P000110,Household Item 04,SoraCare,Daily_Necessities,Household,Household_Type4,270,143,piece,4pack,336,SUP017,999,0,0,0,0,2022-09-18
+P000111,Household Item 05,SoraCare,Daily_Necessities,Household,Household_Type1,440,235,piece,6pack,873,SUP006,401,0,0,0,0,2022-07-12
+P000112,Household Item 06,SoraCare,Daily_Necessities,Household,Household_Type2,1260,583,piece,2pack,833,SUP020,975,0,0,0,0,2023-01-26
+P000113,Household Item 07,AquaSkin,Daily_Necessities,Household,Household_Type3,320,174,piece,2pack,514,SUP006,879,0,0,0,0,2024-09-07
+P000114,Household Item 08,LifeRoot,Daily_Necessities,Household,Household_Type1,940,415,piece,5pack,870,SUP012,133,0,0,0,1,2022-08-28
+P000115,Household Item 09,MediTrust,Daily_Necessities,Household,Household_Type2,560,268,piece,3pack,853,SUP006,1016,0,0,0,1,2022-03-26
+P000116,Household Item 10,AquaSkin,Daily_Necessities,Household,Household_Type2,280,130,piece,3pack,491,SUP002,951,0,0,1,0,2023-02-11
+P000117,Household Item 11,MediTrust,Daily_Necessities,Household,Household_Type3,200,108,piece,1pack,1136,SUP016,985,0,0,0,0,2024-06-20
+P000118,Household Item 12,DailyFit,Daily_Necessities,Household,Household_Type2,1170,576,piece,5pack,165,SUP014,358,0,0,0,1,2024-04-03
+P000119,Household Item 13,AquaSkin,Daily_Necessities,Household,Household_Type2,540,252,piece,1pack,526,SUP016,146,0,0,0,0,2023-07-26
+P000120,Household Item 14,LifeRoot,Daily_Necessities,Household,Household_Type4,430,194,piece,4pack,890,SUP005,1192,0,0,0,1,2025-03-07
+P000121,Sanitary Item 01,LUKE Select,Hygiene,Sanitary,Sanitary_Type2,390,178,piece,3pack,790,SUP018,1197,0,0,0,0,2022-05-05
+P000122,Sanitary Item 02,DailyFit,Hygiene,Sanitary,Sanitary_Type4,660,311,piece,5pack,936,SUP017,210,0,0,0,0,2023-07-30
+P000123,Sanitary Item 03,SoraCare,Hygiene,Sanitary,Sanitary_Type3,560,311,piece,5pack,368,SUP011,668,0,0,0,0,2022-04-23
+P000124,Sanitary Item 04,DailyFit,Hygiene,Sanitary,Sanitary_Type2,570,315,piece,3pack,48,SUP002,774,0,0,0,0,2024-07-18
+P000125,Sanitary Item 05,MediTrust,Hygiene,Sanitary,Sanitary_Type1,390,203,piece,6pack,1167,SUP020,884,0,0,0,0,2022-03-28
+P000126,Sanitary Item 06,MediTrust,Hygiene,Sanitary,Sanitary_Type4,1100,558,piece,2pack,825,SUP001,954,0,0,0,0,2024-12-11
+P000127,Sanitary Item 07,AquaSkin,Hygiene,Sanitary,Sanitary_Type3,630,317,piece,5pack,682,SUP011,869,0,0,0,0,2023-09-27
+P000128,Sanitary Item 08,AquaSkin,Hygiene,Sanitary,Sanitary_Type3,1120,577,piece,1pack,488,SUP009,445,0,0,1,1,2024-06-28
+P000129,Sanitary Item 09,DailyFit,Hygiene,Sanitary,Sanitary_Type3,650,363,piece,4pack,1068,SUP019,1149,0,0,0,1,2024-01-09
+P000130,Sanitary Item 10,AquaSkin,Hygiene,Sanitary,Sanitary_Type1,1010,517,piece,6pack,1072,SUP002,196,0,0,0,1,2022-05-24
+P000131,Sanitary Item 11,PureOne,Hygiene,Sanitary,Sanitary_Type2,370,192,piece,2pack,568,SUP005,1078,0,0,0,0,2023-02-22
+P000132,Sanitary Item 12,MediTrust,Hygiene,Sanitary,Sanitary_Type2,570,257,piece,6pack,1104,SUP007,510,0,0,1,1,2023-08-12
+P000133,Drink Item 01,SoraCare,Beverage,Drink,Drink_Type2,120,56,unit,1pack,979,SUP010,84,1,1,0,0,2023-03-12
+P000134,Drink Item 02,LUKE Select,Beverage,Drink,Drink_Type2,110,52,unit,5pack,1056,SUP019,253,1,1,0,0,2023-12-18
+P000135,Drink Item 03,PureOne,Beverage,Drink,Drink_Type4,280,112,unit,1pack,980,SUP009,328,1,1,1,0,2024-07-03
+P000136,Drink Item 04,LifeRoot,Beverage,Drink,Drink_Type1,320,139,unit,4pack,1059,SUP020,359,1,1,0,0,2024-12-08
+P000137,Drink Item 05,DailyFit,Beverage,Drink,Drink_Type3,190,78,unit,1pack,320,SUP009,342,1,1,0,0,2023-07-15
+P000138,Drink Item 06,NeoWell,Beverage,Drink,Drink_Type4,240,104,unit,1pack,611,SUP004,328,1,1,0,0,2024-11-04
+P000139,Drink Item 07,MediTrust,Beverage,Drink,Drink_Type1,250,118,unit,5pack,210,SUP011,139,1,1,0,0,2024-01-09
+P000140,Drink Item 08,AquaSkin,Beverage,Drink,Drink_Type2,210,88,unit,5pack,949,SUP012,60,1,1,1,0,2025-03-21
+P000141,Drink Item 09,SoraCare,Beverage,Drink,Drink_Type2,130,57,unit,2pack,425,SUP012,340,1,1,0,0,2022-04-19
+P000142,Drink Item 10,PureOne,Beverage,Drink,Drink_Type1,250,112,unit,3pack,800,SUP013,88,1,1,0,0,2022-08-01
+P000143,Food Item 01,NeoWell,Snack,Food,Food_Type3,270,134,unit,1pack,352,SUP006,319,1,1,0,0,2023-08-03
+P000144,Food Item 02,PureOne,Snack,Food,Food_Type2,150,70,unit,3pack,986,SUP010,125,1,1,0,0,2024-05-10
+P000145,Food Item 03,AquaSkin,Snack,Food,Food_Type4,370,178,unit,4pack,370,SUP017,222,1,1,0,0,2023-08-16
+P000146,Food Item 04,DailyFit,Snack,Food,Food_Type4,140,74,unit,3pack,1130,SUP002,354,1,1,1,1,2025-01-20
+P000147,Food Item 05,AquaSkin,Snack,Food,Food_Type2,200,104,unit,5pack,494,SUP004,151,1,1,0,0,2025-04-22
+P000148,Food Item 06,SoraCare,Snack,Food,Food_Type2,250,106,unit,1pack,919,SUP001,126,1,1,1,0,2022-05-21
+P000149,Food Item 07,DailyFit,Snack,Food,Food_Type2,310,152,unit,1pack,453,SUP011,323,1,1,0,1,2023-11-11
+P000150,Food Item 08,PureOne,Snack,Food,Food_Type1,180,91,unit,1pack,772,SUP004,260,1,1,0,0,2022-10-07

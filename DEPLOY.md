@@ -1,334 +1,198 @@
-# LUMI Tokyo Retail Analytics & ML Platform
+# デプロイと起動ガイド（現行構成, 2026-04）
 
-## 🎯 プロジェクト概要
+このドキュメントは、現在のリポジトリでそのまま実行できる起動手順と運用上の注意点をまとめたものです。
 
-日本のスーパーマーケット（LUMI東京首都圏規模）向けの販売予測と商品推薦システム。Excelファイルからの一括データアップロード、自動特徴量生成、機械学習モデル訓練、リアルタイム予測・推薦APIを提供。
+## 1. 現在の標準エントリ
 
-### スケール
-- **店舗数**: 65店舗（東京・神奈川・千葉・埼玉）
-- **顧客数**: 120,000名
-- **商品数**: 3,500種類
-- **月間取引件数**: 500,000件
+- バックエンドの主エントリ: `backend/app/main.py`
+- 推奨バックエンド起動コマンド: `python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+- フロントエンド: Vite (`npm run dev`)
 
-## 🏗️ アーキテクチャ
+補足:
+- `backend/main.py` は過去の実験用エントリ（`/analyze`）であり、通常の運用フローでは使用しません。
 
-```
-┌─────────────────┐
-│  React Frontend │  Ant Design UI
-│   (Vite + TS)   │  - Upload / Dashboard / Forecast / Recommend
-└────────┬────────┘
-         │ REST API
-┌────────▼─────────────────────────────────────────┐
-│            FastAPI Backend                        │
-│  ┌──────────────┐  ┌───────────────────────┐    │
-│  │ Excel Parser │→│ Data Quality Checker  │    │
-│  │ (多言語対応)   │  │ (欠損・異常値・重複)    │    │
-│  └──────┬───────┘  └───────────┬───────────┘    │
-│         │                      │                 │
-│  ┌──────▼──────────────────────▼───────┐        │
-│  │     Feature Engineering              │        │
-│  │  時系列・ラグ・移動平均・価格・        │        │
-│  │  プロモーション・天気・祝日・在庫      │        │
-│  └──────┬───────────────────────────────┘        │
-│         │                                         │
-│  ┌──────▼──────────┐  ┌───────────────────┐    │
-│  │ Forecasting     │  │ Recommendation     │    │
-│  │ - Baseline      │  │ - Collaborative   │    │
-│  │ - LightGBM      │  │ - Content-Based   │    │
-│  │ - Prophet (P1)  │  │ - Hybrid          │    │
-│  └─────────────────┘  └───────────────────┘    │
-└───────────────────────────────────────────────────┘
-```
+## 2. 起動前の準備
 
-## 📂 プロジェクト構造
+### 2.1 前提環境
 
-```
-dataAnalysisProject/
-├── backend/
-│   ├── main.py                      # FastAPI エントリーポイント
-│   ├── requirements.txt              # Python依存関係
-│   └── app/
-│       ├── config.py                 # 設定管理
-│       ├── api/
-│       │   └── v1/
-│       │       ├── __init__.py
-│       │       ├── forecast.py       # 予測API
-│       │       └── recommend.py      # 推薦API
-│       ├── core/
-│       │   ├── excel_parser.py       # Excel解析
-│       │   ├── quality.py            # データ品質チェック
-│       │   └── feature_engine.py     # 特徴量生成
-│       ├── models/
-│       │   ├── forecasting.py        # 予測モデル
-│       │   └── recommendation.py     # 推薦モデル
-│       └── schemas/
-│           └── schemas.py            # Pydanticスキーマ
-├── src/
-│   ├── App.jsx                       # Reactメインアプリ
-│   ├── main.jsx
-│   ├── index.css
-│   ├── pages/
-│   │   ├── UploadPage.jsx            # データアップロード
-│   │   ├── Dashboard.jsx             # ダッシュボード
-│   │   ├── ForecastPage.jsx          # 予測ページ
-│   │   └── RecommendPage.jsx         # 推薦ページ
-│   └── services/
-│       └── api.js                    # API クライアント
-├── data/
-│   ├── uploaded/                     # アップロードファイル
-│   ├── processed/                    # 処理済みデータ
-│   └── models/                       # 保存モデル
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-├── .env
-└── README.md
-```
-
-## 🚀 セットアップ
-
-### 前提条件
 - Python 3.11+
 - Node.js 18+
-- npm または yarn
 
-### バックエンドセットアップ
+### 2.2 依存関係のインストール
 
 ```powershell
-# 仮想環境作成
+# backend
 cd backend
 python -m venv dataanalysisproject
-.\dataanalysisproject\Scripts\activate
-
-# 依存関係インストール
+.\dataanalysisproject\Scripts\Activate.ps1
 pip install -r requirements.txt
 
-# サーバー起動
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# frontend
+cd ..
+npm install
 ```
 
-### フロントエンドセットアップ
+注意:
+- ルートの `start.ps1` / `start.bat` はサービス起動専用です。依存関係の自動インストールは行いません。
+
+## 3. Windows ローカル起動
+
+### 3.1 ワンクリック起動（推奨）
+
+プロジェクトルートで実行:
 
 ```powershell
-# 依存関係インストール
-npm install
+.\start.ps1
+```
 
-# 開発サーバー起動
+または:
+
+```bat
+start.bat
+```
+
+### 3.2 バックエンドのみ起動
+
+```powershell
+cd backend
+.\start_backend.ps1
+```
+
+### 3.3 手動起動（最も安定）
+
+バックエンド:
+
+```powershell
+cd backend
+.\dataanalysisproject\Scripts\Activate.ps1
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+フロントエンド（別ターミナル）:
+
+```powershell
+cd <プロジェクトルート>
 npm run dev
 ```
 
-ブラウザで http://localhost:5173 にアクセス
+## 4. 起動後の確認
 
-## 📊 データフォーマット
+- API ドキュメント: `http://localhost:8000/api/docs`
+- ヘルスチェック: `http://localhost:8000/api/health`
+- フロントエンド: `http://localhost:5173`
 
-### 必須シート（英語/日本語/中国語対応）
+最小確認フロー:
 
-1. **取引データ (Transactions/トランザクション/交易)**
-   - transaction_id, customer_id, product_id, store_id
-   - quantity, unit_price, total_price
-   - transaction_date
+1. Upload 画面でファイルをアップロード（`.xlsx` / `.xls` / `.csv` / `.zip`、複数 CSV の同時選択可）
+2. Dashboard へ遷移し、学習ステータスを確認
+3. Forecast / Recommend で 1 回ずつ推論を実行
+4. CSV/ZIP 利用時は warning の内容（フィールド不足・ファイル名候補）を確認
 
-2. **商品マスタ (Products/商品/产品)**
-   - product_id, product_name
-   - category, sub_category
-   - unit_cost, selling_price
+## 5. 設定と環境変数
 
-3. **顧客マスタ (Customers/顧客/客户)**
-   - customer_id, customer_name
-   - gender, age, membership_level
-   - registration_date
+バックエンド設定ファイル: `backend/app/config.py`
 
-4. **店舗マスタ (Stores/店舗/门店)**
-   - store_id, store_name
-   - prefecture, city, area
+主要設定:
 
-### オプションシート（機能拡張）
+- アップロード最大サイズ: `MAX_UPLOAD_SIZE = 100MB`
+- 許可拡張子: `ALLOWED_EXTENSIONS = {".xlsx", ".xls", ".csv", ".zip"}`
+- CORS 既定値: `http://localhost:5173`, `http://localhost:3000`
+- 既定予測期間: `FORECAST_HORIZON = 14`
+- 解析後ファイル削除: `DELETE_AFTER_PARSE = False`
 
-- **Promotions**: プロモーション効果分析
-- **Weather**: 天気と売上の相関
-- **Holidays**: 祝日需要予測
-- **Inventory**: 在庫最適化
+`.env` に同名キーを定義することで上書きできます。
 
-## 🔧 API エンドポイント
+## 6. 本番運用の現状と推奨
 
-### データアップロード
-```
-POST /api/v1/upload
-Content-Type: multipart/form-data
+### 6.1 リポジトリ現状
 
-Response:
-{
-  "success": true,
-  "data": {
-    "version": "20240101_120000",
-    "sheet_summaries": {...}
-  }
-}
-```
+現時点で同梱されていないもの:
 
-### 販売予測
-```
-GET /api/v1/forecast?product_id=P000001&store_id=LUMI0001&horizon=14
+- Dockerfile
+- docker-compose.yml
+- systemd / NSSM のサービス定義
 
-Response:
-{
-  "success": true,
-  "data": {
-    "product_id": "P000001",
-    "predictions": [12.5, 13.2, ...],
-    "dates": ["2024-01-01", "2024-01-02", ...]
-  }
-}
-```
+本番デプロイ時は、対象環境に合わせて上記を追加してください。
 
-### 商品推薦
-```
-GET /api/v1/recommend?customer_id=C000001&top_k=10
+### 6.2 最小本番起動（非コンテナ）
 
-Response:
-{
-  "success": true,
-  "data": {
-    "customer_id": "C000001",
-    "recommendations": [
-      {
-        "product_id": "P000123",
-        "product_name": "コシヒカリ 5kg",
-        "score": 0.87
-      }
-    ]
-  }
-}
-```
-
-## 🧠 機械学習モデル
-
-### 販売予測
-- **ベースラインモデル**: 移動平均（MA-7/MA-14/MA-28）
-- **LightGBM**: 勾配ブースティング決定木
-  - 特徴量: 時系列ラグ、移動平均、価格、プロモーション、天気、祝日
-  - メトリクス: MAE, RMSE, MAPE
-  - 早期停止: 50ラウンド改善なしで停止
-
-### 推薦システム
-- **協同フィルタリング (CF)**: ユーザー間類似度（コサイン類似度）
-- **コンテンツベース**: カテゴリー・価格帯類似度
-- **ハイブリッド**: CF 60% + Content 40%
-- **フォールバック**: 新規ユーザー → 人気商品
-
-## 🎨 フロントエンド機能
-
-### 1. データアップロードページ
-- ドラッグ&ドロップでExcelアップロード
-- リアルタイム解析進捗表示
-- データ品質レポート自動生成
-- 警告・エラー表示
-
-### 2. ダッシュボード
-- 総シート数・レコード数統計
-- シート別データサマリー
-- モデル訓練ボタン（予測・推薦）
-- バージョン管理
-
-### 3. 販売予測ページ
-- 商品ID・店舗ID入力
-- 予測期間スライダー（1-90日）
-- 予測結果グラフ（Recharts）
-- 詳細データテーブル
-
-### 4. 商品推薦ページ
-- 顧客ID入力
-- 推薦商品数設定（Top-K）
-- 推薦カード表示（スコア付き）
-- 人気商品ランキング
-
-## ⚙️ 設定
-
-### backend/app/config.py
-```python
-MAX_UPLOAD_SIZE = 100 * 1024 * 1024  # 100MB
-FORECAST_HORIZON = 14                 # 予測日数
-TOP_K_RECOMMEND = 10                  # 推薦商品数
-MISSING_RATE_CRITICAL = 0.6           # 欠損率閾値
-```
-
-### .env
-```
-VITE_API_BASE_URL=http://localhost:8000/api/v1
-```
-
-## 🧪 テスト計画（実装後）
-
-### バックエンドテスト
 ```powershell
 cd backend
-pytest tests/ -v --cov=app
+.\dataanalysisproject\Scripts\Activate.ps1
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
 ```
 
-### フロントエンドテスト
+フロントエンドビルド:
+
 ```powershell
-npm run test
+cd <プロジェクトルート>
+npm run build
+npm run preview
 ```
 
-### 統合テスト
-1. Excelアップロード → 解析成功
-2. モデル訓練 → メトリクス確認
-3. 予測API → 正常レスポンス
-4. 推薦API → Top-K商品返却
+その後、Nginx / IIS などで `/api` をバックエンドへリバースプロキシしてください。
 
-## 📋 TODO リスト
+## 7. よくある問題と対処
 
-### P0（MVP完了）
-- [x] Excel多言語パーサー
-- [x] データ品質チェッカー
-- [x] 特徴量エンジニアリング
-- [x] LightGBM予測モデル
-- [x] ハイブリッド推薦システム
-- [x] FastAPI エンドポイント
-- [x] React UI（4ページ）
-- [x] ルーティング・ナビゲーション
+### 7.1 `ModuleNotFoundError: No module named app`
 
-### P1（次期優先）
-- [ ] Prophet 時系列予測追加
-- [ ] モデル永続化（pickle/joblib）
-- [ ] PostgreSQL データベース統合
-- [ ] Docker Compose 構成
-- [ ] Celery バックグラウンドタスク
-- [ ] 単体・統合テスト
-- [ ] エラーロギング（Sentry）
-- [ ] API認証（JWT）
+原因:
+- `backend` 以外のディレクトリで起動している。
 
-### P2（将来拡張）
-- [ ] 在庫最適化モデル
-- [ ] 価格弾力性分析
-- [ ] A/Bテスト基盤
-- [ ] リアルタイムストリーミング予測
-- [ ] GraphQL API
-- [ ] 管理者ダッシュボード
+対処:
 
-## 🐛 既知の問題
+```powershell
+cd backend
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-1. **モデル永続化未実装**: 現状メモリ保持のみ、再起動でリセット
-2. **バッチ予測パフォーマンス**: 大量リクエスト時の最適化必要
-3. **フロントエンドルーティング**: `window.location.href` でページリロード発生
+### 7.2 仮想環境の有効化に失敗する
 
-## 🤝 コントリビューション
+原因:
+- ルートの `.venv` を前提にしているが、このプロジェクトは固定していない。
 
-1. Feature ブランチ作成
-2. コード変更 + テスト追加
-3. Pull Request 作成
-4. レビュー後マージ
+対処:
+- `backend/dataanalysisproject` を使うか、任意の環境を用意して `backend/requirements.txt` をインストールする。
 
-## 📝 ライセンス
+### 7.3 アップロードで「未対応フォーマット」エラー
 
-Apache-2.0 license
+確認:
+- 拡張子が `.xlsx` / `.xls` / `.csv` / `.zip` のいずれかであること。
 
-## 👥 作者
+### 7.4 CSV/ZIP は成功したが一部データが認識されない
 
-Senior Full-Stack Data & ML Engineering AI Agent
+原因:
+- CSV ファイル名が標準 Sheet 名にマッピングされていない。
 
----
+対処:
 
-**最終更新**: 2024-01-XX  
-**バージョン**: 1.0.0  
-**ステータス**: MVP完了 🚀
+- 標準名で命名する（例: `transaction_items.csv`, `transaction.csv`, `product.csv`）
+- 複数 CSV を同時アップロードする場合は、少なくとも `transaction_items.csv`, `transaction.csv`, `product.csv`, `customer.csv` を同時選択
+- upload 応答の `warnings` で `zip_skipped_files` と `suggested_sheet_names_by_file` を確認
+
+### 7.5 学習が `skipped` になる / モデル未学習エラーが出る
+
+原因:
+- 必須 Sheet もしくは必須フィールドが不足している。
+
+対処:
+
+```text
+GET /api/v1/data/readiness
+GET /api/v1/data/field-readiness
+```
+
+`reason_code` / `reason_ja` を確認し、データを補完後に再学習してください。
+
+### 7.6 TimeSeries 関連 API が失敗する
+
+確認:
+- 環境に `prophet` がインストールされているかを確認。
+
+補足:
+- 未インストールの場合、一部テストは条件付きでスキップされ、学習 API は失敗する可能性があります。
+
+### 7.7 フロントエンドで CORS エラー
+
+確認:
+- `backend/app/config.py` の `ALLOWED_ORIGINS` にフロントエンド URL が含まれているか。

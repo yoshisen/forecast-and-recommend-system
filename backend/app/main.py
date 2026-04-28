@@ -10,6 +10,10 @@ from app.config import settings
 from app.api.v1.forecast import router as forecast_router
 from app.api.v1.recommend import router as recommend_router
 from app.api.v1.data import router as data_router
+from app.api.v1.classification import router as classification_router
+from app.api.v1.association import router as association_router
+from app.api.v1.clustering import router as clustering_router
+from app.api.v1.timeseries import router as timeseries_router
 
 # ロギング設定
 logging.basicConfig(
@@ -41,12 +45,20 @@ app.state.data_versions = {}
 app.state.current_version = None
 app.state.forecast_pipeline = None
 app.state.recommender = None
+app.state.classifier = None
+app.state.association_miner = None
+app.state.clusterer = None
+app.state.prophet_forecaster = None
 app.state.ws_clients = set()
 
 # APIルーターを登録
 app.include_router(data_router, prefix=f"{settings.API_V1_PREFIX}", tags=["data"])
 app.include_router(forecast_router, prefix=f"{settings.API_V1_PREFIX}", tags=["forecast"])
 app.include_router(recommend_router, prefix=f"{settings.API_V1_PREFIX}", tags=["recommend"])
+app.include_router(classification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["classification"])
+app.include_router(association_router, prefix=f"{settings.API_V1_PREFIX}", tags=["association"])
+app.include_router(clustering_router, prefix=f"{settings.API_V1_PREFIX}", tags=["clustering"])
+app.include_router(timeseries_router, prefix=f"{settings.API_V1_PREFIX}", tags=["timeseries"])
 
 
 @app.on_event("startup")
@@ -94,7 +106,7 @@ async def training_ws(ws: WebSocket):
             await ws.receive_text()
     except WebSocketDisconnect:
         app.state.ws_clients.discard(ws)
-    except Exception:
+    except (RuntimeError, ValueError, ConnectionError):
         app.state.ws_clients.discard(ws)
 
 

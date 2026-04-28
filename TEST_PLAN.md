@@ -1,430 +1,403 @@
-# テスト計画書
+# テスト計画（システム全体版・追加モジュール対応）
 
-## 🧪 テスト概要
+本ドキュメントは、現行リポジトリの実装に合わせた実行可能なテスト活動を定義します。
 
-完全なシステムコード実装後に実行する総合テスト計画。
+## 1. 現在のテスト状況と戦略
 
-## 📋 テスト項目
+- バックエンドは `pytest + pytest-cov + pytest-asyncio + httpx` を導入済みで、ヘルスチェック、タスク登録、モジュール異常系、学習エンドポイント行列、主要成功パスをカバー。
+- フロントエンドは `vitest + testing-library + jsdom` を導入済みで、Upload/Dashboard/Forecast/Recommend/Classification/Association/Clustering/TimeSeries の主要画面をカバー。
+- E2E は Playwright（Chromium）を導入済みで、アップロード->分析->予測->推薦の主経路と、未学習時エラー表示の経路をカバー。
+- 運用方針は「自動回帰中心 + 手動探索補完」。自動化で安定性を担保し、手動で複雑な UI/相互作用を確認する。
 
-### 1. バックエンド単体テスト
+## 2. テスト範囲（今回リライト後の対象）
 
-#### 1.1 Excel パーサーテスト
-```python
-# tests/test_excel_parser.py
+### 2.1 バックエンド
 
-def test_sheet_mapper_japanese():
-    """日本語シート名認識テスト"""
-    mapper = SheetMapper()
-    assert mapper.detect_type("トランザクション") == "transactions"
-    assert mapper.detect_type("商品") == "products"
+- データ/バージョン: upload, parse, quality report, readiness, samples, version list, total forecast。
+- 学習/推論:
+  - Forecast
+  - Recommend
+  - Classification
+  - Association
+  - Clustering
+  - TimeSeries（Prophet）
+- 学習状態: `pending/running/completed/failed/skipped`、進捗率、エラートレース。
+- リアルタイム状態: WebSocket `/api/v1/ws/training` とフロントのポーリングフォールバック。
 
-def test_field_standardizer():
-    """フィールド名標準化テスト"""
-    standardizer = FieldStandardizer()
-    assert standardizer.standardize("商品ID") == "product_id"
-    assert standardizer.standardize("Product ID") == "product_id"
+### 2.2 フロントエンド画面
 
-def test_excel_parser_full():
-    """完全Excel解析テスト"""
-    parser = ExcelParser()
-    result = parser.parse("data/uploaded/lumi_tokyo_data.xlsx")
-    assert "transactions" in result
-    assert len(result["transactions"]) > 0
+- Home
+- Upload
+- Dashboard
+- Forecast
+- Recommend
+- Classification
+- Association
+- Clustering
+- TimeSeries
+
+## 3. 環境準備
+
+### 3.1 サービス起動
+
+推奨（ルートでワンクリック）:
+
+```powershell
+.\start.ps1
 ```
 
-**実行コマンド**:
+個別起動:
+
+```powershell
+# Terminal A
+cd backend
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Terminal B
+cd ..
+npm run dev
+```
+
+### 3.2 ヘルスチェック
+
+```powershell
+Invoke-RestMethod http://localhost:8000/api/health
+Invoke-RestMethod http://localhost:8000/api/v1/versions
+Invoke-RestMethod http://localhost:8000/api/v1/data/summary
+```
+
+期待値:
+- いずれも JSON を返す。
+- `/api/health` は `status=healthy`。
+- そのほかは妥当な `success` または説明可能なエラーを返す。
+
+### 3.3 テストデータ生成
+
+小規模（通常回帰向け）:
+
+```powershell
+python generate_supermarket_data_small.py data/uploaded/small_test.xlsx
+```
+
+大規模（性能回帰向け）:
+
+```powershell
+python generate_supermarket_data.py data/uploaded/large_test.xlsx
+```
+
+## 4. 学習可能性チェック（必須）
+
+アップロード後は必ず readiness を確認し、データ不足をシステム障害と誤判定しない。
+
+```powershell
+Invoke-RestMethod "http://localhost:8000/api/v1/data/readiness"
+```
+
+タスクごとの必須 Sheet（task_registry 準拠）:
+
+- forecast: `transaction_items + transaction + product`
+- recommend: `transaction_items + transaction + customer + product`
+- classification: `transaction_items + transaction + customer`
+- association: `transaction_items + transaction + product`
+- clustering: `transaction_items + transaction + customer`
+- prophet: `transaction_items + transaction + product`
+
+`can_train=false` の場合は「前提不足（想定動作）」として扱い、失敗扱いにしない。
+
+## 5. 全体スモークテスト（現行版で毎回実施）
+
+### 5.1 アップロードと解析
+
+手順:
+
+1. Upload 画面で `small_test.xlsx` をアップロード
+2. 進捗が 100% になるまで確認
+3. parse/quality/validation の返却内容を確認
+
+期待値:
+
+- `success=true` を返す
+- `version` と `available_sheets` を表示
+- Dashboard へ自動遷移
+
+### 5.2 Dashboard 状態確認
+
+手順:
+- Dashboard を開いて 1〜3 分監視
+
+期待値:
+
+- Sheet 数、総レコード数、version を表示
+- 各タスクに状態ラベルと進捗バーを表示
+- タスク状態が条件に応じて `pending/running/completed/skipped/failed` に遷移
+- 失敗時はエラー内容とトレースを確認可能
+
+### 5.3 自動学習と手動再学習
+
+手順:
+
+1. アップロード後の自動学習進行を確認
+2. 任意タスクで「学習開始/再学習」を実行
+
+期待値:
+
+- 状態が再度 `running` に入る
+- 最終的に `completed` もしくは明確な失敗理由を返す
+
+### 5.4 Forecast（画面 + API）
+
+手順:
+
+1. `/api/v1/data/samples` から `product_id/store_id` を取得
+2. Forecast 画面で 14 日予測を実行
+3. API 実行
+
+```powershell
+Invoke-RestMethod "http://localhost:8000/api/v1/forecast?product_id=<PID>&store_id=<SID>&horizon=14"
+```
+
+期待値:
+
+- 予測結果、トレンド可視化、明細が表示される
+- `horizon` 1〜90 が有効
+- 未学習時は明確なエラーを返し、画面はクラッシュしない
+
+### 5.5 Recommend（画面 + API）
+
+手順:
+
+1. `customer_id` で個別推薦を実行
+2. 人気推薦に切替
+3. API 実行
+
+```powershell
+Invoke-RestMethod "http://localhost:8000/api/v1/recommend?customer_id=<CID>&top_k=10"
+Invoke-RestMethod "http://localhost:8000/api/v1/recommend/popular?top_k=10"
+```
+
+期待値:
+
+- 推薦リスト（商品情報 + スコア）を返す
+- `top_k` 1〜50 が有効
+- 未学習時は解釈可能なエラーを返す
+
+### 5.6 Classification（重点）
+
+手順:
+
+1. 画面で分類モデル学習を実行
+2. customer_id で予測
+3. 閾値スキャンと閾値更新を実行
+
+推奨 API:
+
+```powershell
+Invoke-RestMethod -Method Post "http://localhost:8000/api/v1/classification/train"
+Invoke-RestMethod "http://localhost:8000/api/v1/classification/predict?customer_id=<CID>&threshold=0.5"
+Invoke-RestMethod "http://localhost:8000/api/v1/classification/threshold-scan?step=0.05"
+Invoke-RestMethod -Method Post "http://localhost:8000/api/v1/classification/tune-threshold?threshold=0.6"
+```
+
+期待値:
+
+- precision/recall/f1 などの学習指標を返す
+- 予測結果と閾値スキャン結果が描画される
+- パラメータ不正時は明確なバリデーションエラー
+
+### 5.7 Association（重点）
+
+手順:
+
+1. 「学習して関連ルールを読み込む」を実行
+2. product_id でクロスセル推薦を照会
+
+推奨 API:
+
+```powershell
+Invoke-RestMethod -Method Post "http://localhost:8000/api/v1/association/train"
+Invoke-RestMethod "http://localhost:8000/api/v1/association/rules?top_k=100"
+Invoke-RestMethod "http://localhost:8000/api/v1/association/recommendations?product_id=<PID>&top_k=10"
+```
+
+期待値:
+
+- support/confidence/lift を含むルールを返す
+- クロスセル結果を返す
+- 未学習時エラーが明確
+
+### 5.8 Clustering（重点）
+
+手順:
+
+1. n_clusters=4 で学習
+2. segments、points（PCA）、customer cluster を確認
+
+推奨 API:
+
+```powershell
+Invoke-RestMethod -Method Post "http://localhost:8000/api/v1/clustering/train?n_clusters=4"
+Invoke-RestMethod "http://localhost:8000/api/v1/clustering/segments"
+Invoke-RestMethod "http://localhost:8000/api/v1/clustering/points?limit=2000"
+Invoke-RestMethod "http://localhost:8000/api/v1/clustering/customer/<CID>"
+```
+
+期待値:
+
+- 顧客数、クラスタ数、シルエット係数などを返す
+- 散布図とセグメント表が表示される
+- customer 照会で所属クラスタを返す
+
+### 5.9 TimeSeries / Prophet（重点）
+
+手順:
+
+1. Prophet 学習を実行
+2. 未来 horizon 予測を実行し区間を確認
+
+推奨 API:
+
+```powershell
+Invoke-RestMethod -Method Post "http://localhost:8000/api/v1/timeseries/train"
+Invoke-RestMethod "http://localhost:8000/api/v1/timeseries/forecast?horizon=14"
+```
+
+期待値:
+
+- `yhat`, `upper/lower`, `trend` を返す
+- `horizon` 1〜90 が有効
+- 未学習時エラーが明確
+
+### 5.10 複数バージョン回帰
+
+手順:
+
+1. `small` と `large` を連続アップロード
+2. `/api/v1/versions` で一覧確認
+3. `version` 指定で summary/forecast/recommend を照会
+
+期待値:
+
+- 複数バージョンが見える
+- バージョン指定時の挙動が説明可能
+- 現行バージョン切替時にフロントがクラッシュしない
+
+## 6. API パラメータと異常系
+
+### 6.1 境界値
+
+- forecast `horizon`: 1-90
+- recommend `top_k`: 1-50
+- clustering `n_clusters`: 2-12
+- clustering points `limit`: 100-10000
+- classification `threshold`: (0,1)
+- classification threshold-scan `step`: (0,0.2]
+
+### 6.2 典型的な異常挙動（説明可能であること）
+
+- データなし: 404（無効 version / 未アップロード）
+- モデル未学習: 400（当該モデル未存在）
+- 不正パラメータ: 422 または明確なパラメータエラー
+- 学習失敗: 失敗状態と詳細エラーを返し、黙って失敗しない
+
+## 7. フロント回帰チェックリスト（毎回）
+
+- Upload 成功後に Dashboard へ自動遷移する
+- Dashboard で WebSocket 断時にポーリングへフォールバックできる
+- Dashboard の失敗タスクでトレースを展開表示できる
+- Home の総額予測でモデル種別/horizon 変更が反映される
+- Forecast/Recommend の URL パラメータ自動復元と自動実行が機能する
+- Classification の予測、閾値スキャン、閾値更新が機能する
+- Association のルール表とクロスセル検索が機能する
+- Clustering の散布図、分群表、顧客クラスタ照会が機能する
+- TimeSeries の学習と予測グラフが機能する
+- API エラー時に画面が空白クラッシュせず、エラー表示が出る
+
+## 8. システム障害シナリオ（重点監視）
+
+- 重要 Sheet 不足: タスクが `skipped/failed` になり、理由が明確
+- アップロード成功だが一部モデル不可学習: readiness/summary で理由説明
+- 学習中に画面リロード: 状態復元して表示可能
+- WebSocket 切断: ポーリング継続で状態更新
+- 学習ボタン連打: 状態不整合やフロントフリーズが起きない
+
+## 9. 現フェーズの合格基準
+
+以下を満たせば現行版を「利用可能」と判定する。
+
+- 小規模 Excel のアップロードに成功し、parse/quality/validation を取得できる
+- Dashboard で 6 タスク（forecast/recommend/classification/association/clustering/prophet）の状態を表示できる
+- 少なくとも 4 タスクが小規模データで学習完了し、対応画面で結果を返す
+- 主要 API が安定し説明可能
+  - `/api/health`
+  - `/api/v1/data/summary`
+  - `/api/v1/forecast`
+  - `/api/v1/recommend`
+  - `/api/v1/classification/predict`
+  - `/api/v1/association/rules`
+  - `/api/v1/clustering/segments`
+  - `/api/v1/timeseries/forecast`
+
+## 10. 自動テスト実行ベースライン（現行）
+
+### 10.1 バックエンド
+
+実行:
+
 ```powershell
 cd backend
-pytest tests/test_excel_parser.py -v
+pytest
 ```
 
-#### 1.2 データ品質チェッカーテスト
-```python
-# tests/test_quality.py
+現行ベースライン:
+- 45 テスト通過（追加モジュールの成功/異常系、学習エンドポイント行列を含む）
 
-def test_missing_rate_calculation():
-    """欠損率計算テスト"""
-    df = pd.DataFrame({
-        'col1': [1, 2, None, 4, 5],
-        'col2': [None, None, None, None, 5]
-    })
-    checker = DataQualityChecker()
-    report = checker.check_quality({"test": df})
-    assert report["test"]["col2"]["missing_rate"] == 0.8
+### 10.2 フロントエンド
 
-def test_outlier_detection():
-    """外れ値検出テスト"""
-    # IQR法で異常値検出できることを確認
-    pass
+実行:
 
-def test_validator_required_fields():
-    """必須フィールド検証テスト"""
-    validator = DataValidator()
-    valid, issues = validator.validate({
-        "transactions": pd.DataFrame(columns=["transaction_id", "customer_id"])
-    })
-    assert not valid  # product_id が欠けているため失敗
-```
-
-**実行コマンド**:
 ```powershell
-pytest tests/test_quality.py -v
+npm run test:run
 ```
 
-#### 1.3 特徴量エンジニアリングテスト
-```python
-# tests/test_feature_engine.py
+現行ベースライン:
+- 29 テスト通過（主要画面、サービス層、エラー表示経路を含む）
 
-def test_time_features():
-    """時系列特徴量生成テスト"""
-    df = pd.DataFrame({
-        'transaction_date': pd.date_range('2024-01-01', periods=10)
-    })
-    engine = FeatureEngine({"transactions": df})
-    result = engine.create_time_features(df.copy())
-    assert 'year' in result.columns
-    assert 'month' in result.columns
-    assert 'dayofweek' in result.columns
+### 10.3 E2E
 
-def test_lag_features():
-    """ラグ特徴量テスト"""
-    # lag_1, lag_7, lag_14 が正しく生成されることを確認
-    pass
+初回準備:
 
-def test_rolling_features():
-    """移動平均特徴量テスト"""
-    # rolling_mean_7, rolling_std_14 が正しく計算されることを確認
-    pass
-```
-
-**実行コマンド**:
 ```powershell
-pytest tests/test_feature_engine.py -v
+npm run e2e:install
 ```
 
-#### 1.4 予測モデルテスト
-```python
-# tests/test_forecasting.py
+日常実行:
 
-def test_baseline_forecaster():
-    """ベースライン予測テスト"""
-    train_df = pd.DataFrame({
-        'product_id': ['P001'] * 30,
-        'store_id': ['S001'] * 30,
-        'quantity': list(range(30))
-    })
-    forecaster = BaselineForecaster()
-    forecaster.fit(train_df)
-    preds = forecaster.predict('P001', 'S001', horizon=7)
-    assert len(preds) == 7
-
-def test_lightgbm_forecaster():
-    """LightGBM予測テスト"""
-    # モデル訓練・予測・評価が正常に動作することを確認
-    pass
-
-def test_forecasting_pipeline():
-    """予測パイプライン統合テスト"""
-    pipeline = ForecastingPipeline()
-    # train → predict → metrics の一連の流れをテスト
-    pass
-```
-
-**実行コマンド**:
 ```powershell
-pytest tests/test_forecasting.py -v
+npm run e2e
 ```
 
-#### 1.5 推薦モデルテスト
-```python
-# tests/test_recommendation.py
+現行ベースライン:
+- 7 Playwright シナリオ通過
+  - happy flow: upload -> dashboard -> forecast -> recommend
+  - failure flow: 未学習時の forecast/recommend エラー表示
+  - advanced analytics success: classification -> association -> clustering -> timeseries
+  - advanced analytics failure: 上記 4 モジュールのエラー表示経路
+  - home success: 概要/総額予測表示 + dashboard への遷移
+  - home warning: データ未準備時の Refresh 警告表示
+  - dashboard failure: 売上予測再学習失敗の可視化
 
-def test_collaborative_filter():
-    """協同フィルタリングテスト"""
-    cf = CollaborativeFilter()
-    user_item_matrix = np.random.rand(100, 50)
-    cf.fit(user_item_matrix)
-    recommendations = cf.recommend(customer_id='C001', top_k=10)
-    assert len(recommendations) <= 10
+## 11. 次段階の拡張方針
 
-def test_content_based_recommender():
-    """コンテンツベース推薦テスト"""
-    # カテゴリ・価格類似度による推薦が動作することを確認
-    pass
-
-def test_hybrid_recommender():
-    """ハイブリッド推薦テスト"""
-    # CF + Content の重み付けスコアが正しく計算されることを確認
-    pass
-```
-
-**実行コマンド**:
-```powershell
-pytest tests/test_recommendation.py -v
-```
-
-#### 1.6 APIエンドポイントテスト
-```python
-# tests/test_api.py
-from fastapi.testclient import TestClient
-from main import app
-
-client = TestClient(app)
-
-def test_health_check():
-    """ヘルスチェックテスト"""
-    response = client.get("/health")
-    assert response.status_code == 200
-
-def test_upload_excel():
-    """Excelアップロードテスト"""
-    with open("data/uploaded/lumi_tokyo_data.xlsx", "rb") as f:
-        response = client.post(
-            "/api/v1/upload",
-            files={"file": ("test.xlsx", f)}
-        )
-    assert response.status_code == 200
-    assert response.json()["success"] == True
-
-def test_forecast_endpoint():
-    """予測APIテスト"""
-    response = client.get("/api/v1/forecast?product_id=P000001&store_id=LUMI0001&horizon=14")
-    assert response.status_code == 200
-    data = response.json()["data"]
-    assert len(data["predictions"]) == 14
-
-def test_recommend_endpoint():
-    """推薦APIテスト"""
-    response = client.get("/api/v1/recommend?customer_id=C000001&top_k=10")
-    assert response.status_code == 200
-    data = response.json()["data"]
-    assert len(data["recommendations"]) <= 10
-```
-
-**実行コマンド**:
-```powershell
-pytest tests/test_api.py -v
-```
-
-### 2. フロントエンドテスト
-
-#### 2.1 コンポーネントテスト
-```javascript
-// src/__tests__/UploadPage.test.jsx
-import { render, screen, fireEvent } from '@testing-library/react';
-import UploadPage from '../pages/UploadPage';
-
-test('renders upload area', () => {
-  render(<UploadPage />);
-  expect(screen.getByText(/ファイルをドロップ/i)).toBeInTheDocument();
-});
-
-test('handles file upload', async () => {
-  // ファイル選択・アップロード処理のテスト
-});
-```
-
-**実行コマンド**:
-```powershell
-npm run test
-```
-
-#### 2.2 APIクライアントテスト
-```javascript
-// src/__tests__/api.test.js
-import { uploadExcel, getForecast, getRecommendations } from '../services/api';
-
-test('uploadExcel makes POST request', async () => {
-  const file = new File(['content'], 'test.xlsx');
-  const response = await uploadExcel(file);
-  expect(response.success).toBe(true);
-});
-```
-
-### 3. 統合テスト
-
-#### 3.1 エンドツーエンドフロー
-```python
-# tests/integration/test_full_flow.py
-
-def test_upload_train_predict_flow():
-    """完全フロー統合テスト"""
-    # 1. Excelアップロード
-    with open("data/uploaded/lumi_tokyo_data.xlsx", "rb") as f:
-        upload_response = client.post("/api/v1/upload", files={"file": f})
-    assert upload_response.status_code == 200
-    
-    # 2. 予測モデル訓練
-    train_response = client.post("/api/v1/forecast/train")
-    assert train_response.status_code == 200
-    
-    # 3. 予測実行
-    forecast_response = client.get("/api/v1/forecast?product_id=P000001&store_id=LUMI0001")
-    assert forecast_response.status_code == 200
-    
-    # 4. 推薦モデル訓練
-    rec_train_response = client.post("/api/v1/recommend/train")
-    assert rec_train_response.status_code == 200
-    
-    # 5. 推薦実行
-    rec_response = client.get("/api/v1/recommend?customer_id=C000001")
-    assert rec_response.status_code == 200
-```
-
-**実行コマンド**:
-```powershell
-pytest tests/integration/ -v
-```
-
-#### 3.2 パフォーマンステスト
-```python
-# tests/performance/test_load.py
-import time
-
-def test_batch_forecast_performance():
-    """バッチ予測パフォーマンステスト"""
-    pairs = [{"product_id": f"P{i:06d}", "store_id": "LUMI0001"} for i in range(100)]
-    
-    start = time.time()
-    response = client.post("/api/v1/forecast/batch", json={"pairs": pairs})
-    elapsed = time.time() - start
-    
-    assert response.status_code == 200
-    assert elapsed < 10  # 100件を10秒以内
-```
-
-**実行コマンド**:
-```powershell
-pytest tests/performance/ -v
-```
-
-### 4. データ品質テスト
-
-#### 4.1 サンプルデータ検証
-```python
-def test_generated_data_quality():
-    """生成データ品質テスト"""
-    df = pd.read_excel("data/uploaded/lumi_tokyo_data.xlsx", sheet_name="Transactions")
-    
-    # 取引件数確認（月間50万件想定）
-    assert len(df) > 400000
-    
-    # 顧客数確認（12万人想定）
-    assert df['customer_id'].nunique() > 100000
-    
-    # 店舗数確認（65店舗）
-    assert df['store_id'].nunique() == 65
-    
-    # 商品数確認（3500種類）
-    assert df['product_id'].nunique() > 3000
-```
-
-### 5. エラーハンドリングテスト
-
-#### 5.1 異常系テスト
-```python
-def test_invalid_file_format():
-    """無効ファイルフォーマットテスト"""
-    response = client.post("/api/v1/upload", files={"file": ("test.txt", b"invalid")})
-    assert response.status_code == 400
-
-def test_missing_required_sheet():
-    """必須シート欠如テスト"""
-    # Transactions シートがないExcelファイルをアップロード
-    # エラーメッセージが適切に返されることを確認
-    pass
-
-def test_forecast_nonexistent_product():
-    """存在しない商品予測テスト"""
-    response = client.get("/api/v1/forecast?product_id=INVALID&store_id=LUMI0001")
-    assert response.status_code == 404
-```
-
-## 📊 テストカバレッジ目標
-
-| モジュール | 目標カバレッジ |
-|----------|--------------|
-| Excel Parser | 90%+ |
-| Quality Checker | 85%+ |
-| Feature Engine | 80%+ |
-| Forecasting | 85%+ |
-| Recommendation | 85%+ |
-| API Endpoints | 95%+ |
-
-## 🚀 全テスト実行コマンド
-
-### バックエンド総合テスト
-```powershell
-cd backend
-pytest tests/ -v --cov=app --cov-report=html --cov-report=term
-```
-
-### フロントエンド総合テスト
-```powershell
-npm run test -- --coverage
-```
-
-### 統合テスト
-```powershell
-# バックエンド起動後
-pytest tests/integration/ -v
-```
-
-## ✅ テスト完了チェックリスト
-
-- [ ] Excel解析（多言語対応）正常動作確認
-- [ ] データ品質レポート生成確認
-- [ ] 特徴量エンジニアリング各種機能確認
-- [ ] LightGBM予測精度確認（MAE, RMSE, MAPE）
-- [ ] ハイブリッド推薦システム動作確認
-- [ ] 全APIエンドポイントレスポンス確認
-- [ ] フロントエンドUI操作確認
-- [ ] エンドツーエンドフロー確認
-- [ ] エラーハンドリング確認
-- [ ] パフォーマンス基準達成確認
-- [ ] カバレッジ目標達成確認
-
-## 📝 テスト実行ログサンプル
-
-```
-================================ test session starts ================================
-platform win32 -- Python 3.11.0, pytest-7.4.3, pluggy-1.3.0
-rootdir: C:\Users\MT250530\Documents\dataAnalysisProject\backend
-plugins: cov-4.1.0
-collected 47 items
-
-tests/test_excel_parser.py::test_sheet_mapper_japanese PASSED                 [  2%]
-tests/test_excel_parser.py::test_field_standardizer PASSED                    [  4%]
-tests/test_excel_parser.py::test_excel_parser_full PASSED                     [  6%]
-tests/test_quality.py::test_missing_rate_calculation PASSED                   [  8%]
-tests/test_quality.py::test_outlier_detection PASSED                          [ 10%]
-tests/test_feature_engine.py::test_time_features PASSED                       [ 12%]
-tests/test_forecasting.py::test_baseline_forecaster PASSED                    [ 14%]
-tests/test_forecasting.py::test_lightgbm_forecaster PASSED                    [ 17%]
-tests/test_recommendation.py::test_collaborative_filter PASSED                [ 19%]
-tests/test_recommendation.py::test_hybrid_recommender PASSED                  [ 21%]
-tests/test_api.py::test_health_check PASSED                                   [ 23%]
-tests/test_api.py::test_upload_excel PASSED                                   [ 25%]
-tests/test_api.py::test_forecast_endpoint PASSED                              [ 27%]
-tests/test_api.py::test_recommend_endpoint PASSED                             [ 29%]
-...
-================================ 47 passed in 23.45s ================================
-
------------ coverage: platform win32, python 3.11.0 -----------
-Name                              Stmts   Miss  Cover
------------------------------------------------------
-app/config.py                        35      2    94%
-app/core/excel_parser.py            156     12    92%
-app/core/quality.py                 134     15    89%
-app/core/feature_engine.py          218     28    87%
-app/models/forecasting.py           187     22    88%
-app/models/recommendation.py        165     19    88%
-app/api/v1/forecast.py               78      5    94%
-app/api/v1/recommend.py              82      4    95%
------------------------------------------------------
-TOTAL                              1055     107    90%
-```
-
----
-
-**テスト実施後**: 結果をGitHub Issuesまたはプロジェクトドキュメントに記録
+- バックエンドのコア層単体テストを拡充
+  - `excel_parser.py`
+  - `quality.py`
+  - `feature_engine.py`
+  - `training_events.py`
+- フロントで Dashboard の「WebSocket切断 + ポーリングフォールバック」の複合ケースを追加
+- E2E 追加候補
+  - 複数バージョン切替フロー
+  - Dashboard リアルタイム更新（WS 切断後のポーリング復旧含む）
+  - 大規模データアップロード時の性能ベースライン
+- CI 方針
+  - PR: バックエンド/フロント単体テスト
+  - 夜間: 大規模データを含むフル E2E

@@ -1,44 +1,95 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Button, message, Spin, Alert, Tag, Progress } from 'antd';
+import { Card, Row, Col, Statistic, Button, message, Spin, Alert, Tag, Progress, Space, Collapse } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import { 
-  ShoppingCartOutlined, 
-  UserOutlined, 
-  ShopOutlined, 
+  ApartmentOutlined,
+  ClusterOutlined,
+  DotChartOutlined,
+  LineChartOutlined,
+  ClockCircleOutlined,
+  ShoppingCartOutlined,
   DatabaseOutlined,
-  RocketOutlined,
-  GiftOutlined
+  GiftOutlined,
 } from '@ant-design/icons';
-import { getDataSummary, trainForecastModel, trainRecommender } from '../services/api';
+import {
+  getDataSummary,
+  getDataFieldReadiness,
+  trainForecastModel,
+  trainRecommender,
+  trainClassificationModel,
+  trainAssociationModel,
+  trainClusteringModel,
+  trainTimeSeriesModel,
+} from '../services/api';
 import ForecastMetricsViz from '../components/ForecastMetricsViz';
 import RecommenderMatrixViz from '../components/RecommenderMatrixViz';
+import { formatReadinessReason } from '../utils/readinessReason';
+
+const TASK_META = {
+  forecast: {
+    title: '売上予測',
+    description: 'LightGBM / ベースライン',
+    icon: <LineChartOutlined style={{ fontSize: 40, color: '#1677ff' }} />,
+    trainFn: trainForecastModel,
+  },
+  recommend: {
+    title: '商品レコメンド',
+    description: 'ハイブリッド推薦',
+    icon: <GiftOutlined style={{ fontSize: 40, color: '#16a34a' }} />,
+    trainFn: trainRecommender,
+  },
+  classification: {
+    title: '顧客分類',
+    description: 'XGBoost / RF フォールバック',
+    icon: <DotChartOutlined style={{ fontSize: 40, color: '#7c3aed' }} />,
+    trainFn: trainClassificationModel,
+  },
+  association: {
+    title: 'アソシエーション分析',
+    description: 'Apriori + Lift',
+    icon: <ApartmentOutlined style={{ fontSize: 40, color: '#d97706' }} />,
+    trainFn: trainAssociationModel,
+  },
+  clustering: {
+    title: 'クラスタリング分析',
+    description: 'KMeans + PCA',
+    icon: <ClusterOutlined style={{ fontSize: 40, color: '#0891b2' }} />,
+    trainFn: trainClusteringModel,
+  },
+  prophet: {
+    title: '時系列予測',
+    description: 'Prophet 季節性',
+    icon: <ClockCircleOutlined style={{ fontSize: 40, color: '#16a34a' }} />,
+    trainFn: trainTimeSeriesModel,
+  },
+};
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState(null);
-  const [showForecastTrace, setShowForecastTrace] = useState(false);
-  const [showRecommendTrace, setShowRecommendTrace] = useState(false);
-  const [training, setTraining] = useState({ forecast: false, recommender: false });
+  const [fieldReadiness, setFieldReadiness] = useState(null);
+  const [expandedErrorTask, setExpandedErrorTask] = useState(null);
+  const [training, setTraining] = useState({});
   const [polling, setPolling] = useState(false);
-  const [wsConnected, setWsConnected] = useState(false);
 
   useEffect(() => {
     loadSummary();
   }, []);
 
-  // Establish WebSocket for training updates
+  // WebSocket で学習状態を反映する
   useEffect(() => {
     const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
     const wsUrl = base.replace(/^http/, 'ws') + '/ws/training';
     let ws;
     try {
       ws = new WebSocket(wsUrl);
-      ws.onopen = () => setWsConnected(true);
       ws.onmessage = (evt) => {
         try {
           const msg = JSON.parse(evt.data);
           if (msg.type === 'training_update') {
             setSummary(prev => {
-              if (!prev) return prev; // Not ready yet
+              if (!prev) return prev; // 初期ロード前は更新しない
               const training = { ...(prev.training || {}) };
               training[msg.model] = msg.status;
               training[`${msg.model}_progress`] = msg.progress;
@@ -48,37 +99,34 @@ const Dashboard = () => {
             });
           }
         } catch (e) {
-          console.error('WS parse error', e);
+          console.error('WebSocket メッセージ解析エラー', e);
         }
       };
       ws.onclose = () => {
-        setWsConnected(false);
-        // fallback polling when disconnected
+        // 切断時はポーリングに切り替える
         setPolling(true);
       };
     } catch (e) {
-      console.error('WS init failed', e);
-      setWsConnected(false);
+      console.error('WebSocket 初期化失敗', e);
       setPolling(true);
     }
     return () => ws && ws.close();
   }, []);
 
-  // Fallback polling when ws disconnected
+  // WebSocket 切断中のフォールバックポーリング
   useEffect(() => {
-    if (!polling) return;
+    if (!polling || !summary) return;
     let interval = setInterval(() => loadSummary(true), 6000);
     return () => clearInterval(interval);
-  }, [polling]);
+  }, [polling, summary]);
 
-  // Stop polling & hide alert once all training finished (not pending/running)
+  // 実行中タスクがなくなったらポーリングを停止
   useEffect(() => {
     if (!summary) return;
     const ti = summary.training || {};
-    const active = ['pending','running'];
-    const forecastActive = active.includes(ti.forecast);
-    const recommendActive = active.includes(ti.recommend);
-    if (polling && !forecastActive && !recommendActive) {
+    const activeStatuses = ['pending', 'running'];
+    const anyActive = Object.keys(TASK_META).some((task) => activeStatuses.includes(ti[task]));
+    if (polling && !anyActive) {
       setPolling(false);
     }
   }, [summary, polling]);
@@ -89,47 +137,50 @@ const Dashboard = () => {
       const response = await getDataSummary();
       if (response.success) {
         setSummary(response.data);
+        try {
+          const readinessResponse = await getDataFieldReadiness(response.data?.version || null);
+          if (readinessResponse.success) {
+            setFieldReadiness(readinessResponse.data?.field_readiness || null);
+          } else {
+            setFieldReadiness(null);
+          }
+        } catch (readinessError) {
+          console.warn('フィールド診断情報の取得に失敗:', readinessError?.message || readinessError);
+          setFieldReadiness(null);
+        }
       }
     } catch (error) {
-      message.error(`データ読み込みエラー: ${error.message}`);
+      const statusCode = error?.response?.status;
+      if (statusCode === 404) {
+        // 404 は未アップロード状態なので通常の空状態 UI へ遷移する。
+        setSummary(null);
+        setFieldReadiness(null);
+        setPolling(false);
+      } else if (!silent) {
+        message.error(`データ読み込みエラー: ${error.message}`);
+      }
     } finally {
       if (!silent) setLoading(false);
     }
   };
 
-  const handleTrainForecast = async () => {
-    try {
-      setTraining({ ...training, forecast: true });
-      message.info('予測モデル訓練中...');
-      
-      const response = await trainForecastModel();
-      
-      if (response.success) {
-        message.success('予測モデル訓練完了！');
-        loadSummary(true);
-      }
-    } catch (error) {
-      message.error(`訓練エラー: ${error.message}`);
-    } finally {
-      setTraining({ ...training, forecast: false });
-    }
-  };
+  const handleTrainTask = async (taskName) => {
+    const meta = TASK_META[taskName];
+    if (!meta) return;
 
-  const handleTrainRecommender = async () => {
     try {
-      setTraining({ ...training, recommender: true });
-      message.info('推薦モデル訓練中...');
-      
-      const response = await trainRecommender();
-      
+      setTraining((prev) => ({ ...prev, [taskName]: true }));
+      message.info(`${meta.title} を学習中...`);
+
+      const response = await meta.trainFn();
       if (response.success) {
-        message.success('推薦モデル訓練完了！');
+        message.success(`${meta.title} の学習が完了しました`);
         loadSummary(true);
       }
     } catch (error) {
-      message.error(`訓練エラー: ${error.message}`);
+      message.error(`${meta.title} の学習に失敗: ${error.message}`);
     } finally {
-      setTraining({ ...training, recommender: false });
+      setTraining((prev) => ({ ...prev, [taskName]: false }));
     }
   };
 
@@ -156,12 +207,104 @@ const Dashboard = () => {
 
   const overallSummary = summary.overall_summary || {};
   const trainingInfo = summary.training || {};
+  const readinessInfo = summary.task_readiness || {};
+  const fieldTaskEntries = Object.entries(fieldReadiness?.tasks || {});
+  const fieldReadyCount = fieldTaskEntries.filter(([, info]) => !!info.can_train_with_fields).length;
+  const fieldBlockedEntries = fieldTaskEntries.filter(([, info]) => !info.can_train_with_fields);
+
+  const buildMissingRequirementText = (taskName, info) => {
+    const missingSheetsText = (info.missing_required_sheets || []).join(', ') || '-';
+    const missingFieldsText = Object.entries(info.missing_required_fields_by_sheet || {})
+      .map(([sheet, fields]) => `${sheet}[${fields.join(', ')}]`)
+      .join('; ') || '-';
+    const aliasHintText = Object.entries(info.missing_required_field_hints || {})
+      .map(([sheet, hints]) => {
+        const renderedHints = (hints || [])
+          .map((hint) => `${hint.field}: ${(hint.aliases || []).slice(0, 6).join(', ')}`)
+          .join(' | ');
+        return `${sheet} -> ${renderedHints}`;
+      })
+      .join('; ');
+
+    return [
+      `タスク: ${taskName}`,
+      `理由: ${formatReadinessReason(info.reason, info.reason_ja, info.reason_code)}`,
+      `不足シート: ${missingSheetsText}`,
+      `不足必須フィールド: ${missingFieldsText}`,
+      aliasHintText ? `認識可能な別名: ${aliasHintText}` : null,
+    ].filter(Boolean).join('\n');
+  };
+
+  const copyMissingRequirement = async (taskName, info) => {
+    const text = buildMissingRequirementText(taskName, info);
+    try {
+      if (!navigator?.clipboard?.writeText) {
+        message.warning('クリップボードを利用できません');
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      message.success('不足項目をコピーしました');
+    } catch (copyError) {
+      message.error('コピーに失敗しました');
+      console.error('コピー処理失敗:', copyError);
+    }
+  };
+
+  const blockedDetailItems = fieldBlockedEntries.map(([taskName, info]) => {
+    const missingSheetsText = (info.missing_required_sheets || []).join(', ') || '-';
+    const missingFieldsText = Object.entries(info.missing_required_fields_by_sheet || {})
+      .map(([sheet, fields]) => `${sheet}[${fields.join(', ')}]`)
+      .join('; ') || '-';
+    const aliasHintText = Object.entries(info.missing_required_field_hints || {})
+      .map(([sheet, hints]) => {
+        const renderedHints = (hints || [])
+          .map((hint) => `${hint.field}: ${(hint.aliases || []).slice(0, 6).join(', ')}`)
+          .join(' | ');
+        return `${sheet} -> ${renderedHints}`;
+      })
+      .join('; ');
+
+    return {
+      key: taskName,
+      label: (
+        <Space>
+          <Tag color="red">{taskName}</Tag>
+          <span>{formatReadinessReason(info.reason, info.reason_ja, info.reason_code)}</span>
+          <Button
+            type="link"
+            size="small"
+            onClick={(event) => {
+              event.stopPropagation();
+              navigate(`/upload-schema?task=${encodeURIComponent(taskName)}`);
+            }}
+          >
+            このタスクの規約を見る
+          </Button>
+        </Space>
+      ),
+      children: (
+        <div>
+          <div><strong>不足シート:</strong> {missingSheetsText}</div>
+          <div style={{ marginTop: 6 }}><strong>不足必須フィールド:</strong> {missingFieldsText}</div>
+          {aliasHintText ? (
+            <div style={{ marginTop: 6 }}><strong>認識可能な別名ヒント:</strong> {aliasHintText}</div>
+          ) : null}
+          <div style={{ marginTop: 10 }}>
+            <Button size="small" onClick={() => copyMissingRequirement(taskName, info)}>
+              不足項目をコピー
+            </Button>
+          </div>
+        </div>
+      ),
+    };
+  });
 
   const statusColor = (s) => {
     switch (s) {
       case 'completed': return 'green';
       case 'failed': return 'red';
       case 'pending': return 'gold';
+      case 'running': return 'processing';
       case 'skipped': return 'default';
       default: return 'blue';
     }
@@ -174,15 +317,114 @@ const Dashboard = () => {
       case 'running': return '実行中';
       case 'failed': return '失敗';
       case 'skipped': return 'スキップ';
-      case 'completed': return '完成';
+      case 'completed': return '完了';
       default: return s || 'N/A';
     }
   };
 
-  const StatusTag = ({ type }) => {
-    const st = trainingInfo[type];
-    if (!st || st === 'completed') return null; // 完了時は非表示
-    return <Tag color={statusColor(st)}>{type}: {translateStatus(st)}</Tag>;
+  const renderTaskCard = (taskName) => {
+    const meta = TASK_META[taskName];
+    const status = trainingInfo[taskName] || 'unknown';
+    const progress = trainingInfo[`${taskName}_progress`] || 0;
+    const reason = trainingInfo[`${taskName}_reason`];
+    const metrics = trainingInfo[`${taskName}_metrics`];
+    const matrixInfo = trainingInfo[`${taskName}_matrix_info`];
+    const summaryData = trainingInfo[`${taskName}_summary`];
+    const error = trainingInfo[`${taskName}_error`];
+    const errorTrace = trainingInfo[`${taskName}_error_trace`];
+    const readyState = readinessInfo[taskName] || {};
+
+    return (
+      <Col xs={24} md={12} xl={8} key={taskName} style={{ marginBottom: 16 }}>
+        <Card>
+          <div style={{ textAlign: 'center' }}>
+            {meta.icon}
+            <h3 style={{ marginTop: 10 }}>{meta.title}</h3>
+            <p style={{ margin: '4px 0', color: '#666' }}>{meta.description}</p>
+            <Tag color={statusColor(status)}>{translateStatus(status)}</Tag>
+            {!readyState.can_train && (
+              <Alert
+                type="warning"
+                showIcon
+                style={{ marginTop: 12, textAlign: 'left' }}
+                message="現在このタスクは学習できません"
+                description={formatReadinessReason(readyState.reason || reason, readyState.reason_ja, readyState.reason_code) || '必須入力が不足しています'}
+              />
+            )}
+
+            {['pending', 'running'].includes(status) && (
+              <div style={{ marginTop: 12 }}>
+                <Progress percent={progress} status="active" />
+              </div>
+            )}
+
+            {taskName === 'forecast' && status === 'completed' && metrics && (
+              <div style={{ marginTop: 10 }}>
+                <ForecastMetricsViz metrics={metrics} />
+              </div>
+            )}
+
+            {taskName === 'recommend' && status === 'completed' && matrixInfo && (
+              <div style={{ marginTop: 10 }}>
+                <RecommenderMatrixViz matrix={matrixInfo} />
+              </div>
+            )}
+
+            {taskName !== 'forecast' && taskName !== 'recommend' && status === 'completed' && (
+              <div style={{ marginTop: 10 }}>
+                <Space wrap>
+                  {metrics && Object.entries(metrics).slice(0, 3).map(([k, v]) => (
+                    <Tag key={`${taskName}-${k}`} color="blue">{k}: {typeof v === 'number' ? Number(v).toFixed(4) : String(v)}</Tag>
+                  ))}
+                  {summaryData && Object.entries(summaryData).slice(0, 3).map(([k, v]) => (
+                    <Tag key={`${taskName}-s-${k}`} color="cyan">{k}: {typeof v === 'number' ? Number(v).toFixed(3) : String(v)}</Tag>
+                  ))}
+                </Space>
+              </div>
+            )}
+
+            {error && (
+              <div style={{ marginTop: 12, textAlign: 'left' }}>
+                <Alert type="error" showIcon message={`${meta.title} の学習失敗`} description={error} />
+                {errorTrace && (
+                  <Button
+                    size="small"
+                    style={{ marginTop: 8 }}
+                    onClick={() => setExpandedErrorTask((prev) => (prev === taskName ? null : taskName))}
+                  >
+                    {expandedErrorTask === taskName ? 'ログを隠す' : 'ログを見る'}
+                  </Button>
+                )}
+                {expandedErrorTask === taskName && errorTrace && (
+                  <pre style={{
+                    marginTop: 8,
+                    maxHeight: 220,
+                    overflow: 'auto',
+                    background: '#1e1e1e',
+                    color: '#dcdcdc',
+                    padding: 12,
+                    borderRadius: 4,
+                    fontSize: 12,
+                  }}>{errorTrace}</pre>
+                )}
+              </div>
+            )}
+
+            <div style={{ marginTop: 12 }}>
+              <Button
+                type="primary"
+                size="large"
+                loading={!!training[taskName]}
+                onClick={() => handleTrainTask(taskName)}
+                disabled={['pending', 'running'].includes(status) || !readyState.can_train}
+              >
+                {status === 'completed' ? '再学習' : '学習開始'}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </Col>
+    );
   };
 
   return (
@@ -241,136 +483,74 @@ const Dashboard = () => {
         </Row>
       </Card>
 
-      <Card title="🤖 モデル訓練" style={{ marginBottom: 24 }}>
+      {fieldTaskEntries.length > 0 && (
+        <Card
+          title="🩺 フィールド診断サマリー"
+          style={{ marginBottom: 24 }}
+          extra={(
+            <Button type="link" onClick={() => navigate('/upload-schema')}>
+              フィールド規約を見る
+            </Button>
+          )}
+        >
+          <Row gutter={16}>
+            <Col span={8}>
+              <Statistic title="学習可能タスク" value={fieldReadyCount} />
+            </Col>
+            <Col span={8}>
+              <Statistic title="ブロック中タスク" value={fieldBlockedEntries.length} />
+            </Col>
+            <Col span={8}>
+              <Statistic title="診断対象タスク数" value={fieldTaskEntries.length} />
+            </Col>
+          </Row>
+
+          {fieldBlockedEntries.length > 0 ? (
+            <>
+              <Alert
+                style={{ marginTop: 16 }}
+                type="warning"
+                showIcon
+                message="現在、以下のタスクで必須フィールドが不足しています"
+              />
+              <Collapse
+                style={{ marginTop: 12 }}
+                size="small"
+                items={blockedDetailItems}
+                defaultActiveKey={blockedDetailItems.map((item) => item.key)}
+              />
+            </>
+          ) : (
+            <Alert
+              style={{ marginTop: 16 }}
+              type="success"
+              showIcon
+              message="現在のバージョンは全タスクの学習要件を満たしています"
+            />
+          )}
+        </Card>
+      )}
+
+      <Card title="🤖 学習タスクコンソール" style={{ marginBottom: 24 }}>
         <Row gutter={16}>
-          <Col span={12}>
-            <Card>
-              <div style={{ textAlign: 'center' }}>
-                <RocketOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: 16 }} />
-                <h3>販売予測モデル</h3>
-                <p style={{ marginBottom: 4 }}>LightGBM ベース時系列予測</p>
-                <p style={{ marginTop: 0 }}>自動訓練: {translateStatus(trainingInfo.forecast)}</p>
-                <StatusTag type="forecast" />
-                {['pending','running'].includes(trainingInfo.forecast) && (
-                  <div style={{ marginTop: 12 }}>
-                    <Progress percent={trainingInfo.forecast_progress || 0} status="active" />
-                    <small style={{ color: '#888' }}>バックグラウンド訓練中...</small>
-                  </div>
-                )}
-                {trainingInfo.forecast === 'completed' && trainingInfo.forecast_metrics && (
-                  <ForecastMetricsViz metrics={trainingInfo.forecast_metrics} />
-                )}
-                <Button 
-                  type="primary" 
-                  size="large"
-                  loading={training.forecast}
-                  onClick={handleTrainForecast}
-                  disabled={['pending','running'].includes(trainingInfo.forecast)}
-                >
-                  訓練開始
-                </Button>
-                {['failed','skipped','completed'].includes(trainingInfo.forecast) && (
-                  <Button style={{ marginLeft: 8 }} onClick={handleTrainForecast} disabled={training.forecast}>
-                    再訓練
-                  </Button>
-                )}
-              </div>
-            </Card>
-          </Col>
-          <Col span={12}>
-            <Card>
-              <div style={{ textAlign: 'center' }}>
-                <GiftOutlined style={{ fontSize: 48, color: '#52c41a', marginBottom: 16 }} />
-                <h3>推薦システム</h3>
-                <p style={{ marginBottom: 4 }}>協同フィルタリング + コンテンツベース</p>
-                <p style={{ marginTop: 0 }}>自動訓練: {translateStatus(trainingInfo.recommend)}</p>
-                <StatusTag type="recommend" />
-                {['pending','running'].includes(trainingInfo.recommend) && (
-                  <div style={{ marginTop: 12 }}>
-                    <Progress percent={trainingInfo.recommend_progress || 0} status="active" />
-                    <small style={{ color: '#888' }}>バックグラウンド訓練中...</small>
-                  </div>
-                )}
-                {trainingInfo.recommend === 'completed' && trainingInfo.recommend_matrix_info && (
-                  <RecommenderMatrixViz matrix={trainingInfo.recommend_matrix_info} />
-                )}
-                <Button 
-                  type="primary" 
-                  size="large"
-                  loading={training.recommender}
-                  onClick={handleTrainRecommender}
-                  style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-                  disabled={['pending','running'].includes(trainingInfo.recommend)}
-                >
-                  訓練開始
-                </Button>
-                {['failed','skipped','completed'].includes(trainingInfo.recommend) && (
-                  <Button style={{ marginLeft: 8 }} onClick={handleTrainRecommender} disabled={training.recommender}>
-                    再訓練
-                  </Button>
-                )}
-              </div>
-            </Card>
-          </Col>
+          {Object.keys(TASK_META).map((taskName) => renderTaskCard(taskName))}
         </Row>
-        {polling && (() => {
-          const ti = trainingInfo;
-          const active = ['pending','running'];
-          const anyActive = active.includes(ti.forecast) || active.includes(ti.recommend);
-          return anyActive ? (
-            <Alert style={{ marginTop: 16 }} type="info" showIcon message="自動訓練進行中" description="状態が完了するまで数秒ごとに更新しています" />
-          ) : null;
-        })()}
+        {polling && (
+          <Alert style={{ marginTop: 16 }} type="info" showIcon message="自動学習を実行中" description="WebSocket 切断時はポーリングで状態を同期します" />
+        )}
       </Card>
 
       <Card title="ℹ️ システム情報">
         <p><strong>アップロード日時:</strong> {summary.uploaded_at}</p>
         <p><strong>ファイル名:</strong> {summary.filename}</p>
-  <p><strong>自動訓練状態:</strong> 予測: {translateStatus(trainingInfo.forecast)} / 推薦: {translateStatus(trainingInfo.recommend)}</p>
-                {trainingInfo.forecast_error && (
-                  <div style={{ marginTop: 12 }}>
-                    <Alert type="error" showIcon message="予測訓練失敗" description={trainingInfo.forecast_error} />
-                    {trainingInfo.forecast_error_trace && (
-                      <Button size="small" style={{ marginTop: 8 }} onClick={() => setShowForecastTrace(v => !v)}>
-                        {showForecastTrace ? 'ログを隠す' : '詳細ログを見る'}
-                      </Button>
-                    )}
-                    {showForecastTrace && trainingInfo.forecast_error_trace && (
-                      <pre style={{
-                        marginTop: 8,
-                        maxHeight: 240,
-                        overflow: 'auto',
-                        background: '#1e1e1e',
-                        color: '#dcdcdc',
-                        padding: 12,
-                        borderRadius: 4,
-                        fontSize: 12
-                      }}>{trainingInfo.forecast_error_trace}</pre>
-                    )}
-                  </div>
-                )}
-                {trainingInfo.recommend_error && (
-                  <div style={{ marginTop: 12 }}>
-                    <Alert type="error" showIcon message="推薦訓練失敗" description={trainingInfo.recommend_error} />
-                    {trainingInfo.recommend_error_trace && (
-                      <Button size="small" style={{ marginTop: 8 }} onClick={() => setShowRecommendTrace(v => !v)}>
-                        {showRecommendTrace ? 'ログを隠す' : '詳細ログを見る'}
-                      </Button>
-                    )}
-                    {showRecommendTrace && trainingInfo.recommend_error_trace && (
-                      <pre style={{
-                        marginTop: 8,
-                        maxHeight: 240,
-                        overflow: 'auto',
-                        background: '#1e1e1e',
-                        color: '#dcdcdc',
-                        padding: 12,
-                        borderRadius: 4,
-                        fontSize: 12
-                      }}>{trainingInfo.recommend_error_trace}</pre>
-                    )}
-                  </div>
-                )}
+        <p>
+          <strong>タスク状態:</strong>{' '}
+          {Object.keys(TASK_META).map((taskName) => (
+            <Tag key={`sys-${taskName}`} color={statusColor(trainingInfo[taskName])}>
+              {taskName}: {translateStatus(trainingInfo[taskName])}
+            </Tag>
+          ))}
+        </p>
       </Card>
     </div>
   );

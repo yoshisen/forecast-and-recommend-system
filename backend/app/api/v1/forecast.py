@@ -21,6 +21,7 @@ async def get_forecast(
     store_id: str = Query(..., description="店舗ID"),
     horizon: int = Query(14, ge=1, le=90, description="予測期間（日数)"),
     use_baseline: bool = Query(False, description="ベースラインモデルを使用"),
+    algorithm: str = Query("lightgbm", description="lightgbm | sarima | xgboost | baseline"),
     version: Optional[str] = Query(None, description="データバージョン")
 ):
     """
@@ -31,6 +32,7 @@ async def get_forecast(
         store_id: 店舗ID
         horizon: 予測期間（日数）
         use_baseline: ベースラインモデルを使用するか
+        algorithm: 予測アルゴリズム (lightgbm | sarima | xgboost | baseline)
         version: データバージョン（省略時は最新）
     
     Returns:
@@ -49,7 +51,7 @@ async def get_forecast(
     pipeline = app.state.forecast_pipeline
     
     try:
-        result = pipeline.forecast(product_id, store_id, horizon, use_baseline)
+        result = pipeline.forecast(product_id, store_id, horizon, use_baseline, algorithm)
         
         return {
             'success': True,

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, Form, Input, InputNumber, Button, message, Spin, Alert, Row, Col, Tag } from 'antd';
 import { GiftOutlined, StarOutlined } from '@ant-design/icons';
 import { getRecommendations, getPopularRecommendations } from '../services/api';
@@ -7,7 +8,20 @@ const RecommendPage = () => {
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState(null);
   const [popularItems, setPopularItems] = useState(null);
+  const [autoSubmitted, setAutoSubmitted] = useState(false);
   const [form] = Form.useForm();
+  const [searchParams] = useSearchParams();
+
+  const initialCustomerId = searchParams.get('customer_id') || undefined;
+  const initialTopK = Number(searchParams.get('top_k') || 10);
+
+  useEffect(() => {
+    if (autoSubmitted) return;
+    if (initialCustomerId) {
+      form.submit();
+      setAutoSubmitted(true);
+    }
+  }, [autoSubmitted, initialCustomerId, form]);
 
   const handleRecommend = async (values) => {
     try {
@@ -44,8 +58,12 @@ const RecommendPage = () => {
     }
   };
 
-  const renderRecommendationCard = (item, index) => (
-    <Col span={8} key={item.product_id}>
+  const renderRecommendationCard = (item, index) => {
+    const normalizedScore = Math.max(0, Math.min(Number(item.score ?? 0), 1));
+    const rawScore = Number(item.raw_score ?? normalizedScore);
+
+    return (
+      <Col xs={24} sm={12} lg={8} key={item.product_id}>
       <Card
         hoverable
         style={{ marginBottom: 16 }}
@@ -61,15 +79,19 @@ const RecommendPage = () => {
         <p><strong>価格:</strong> ¥{item.price ? item.price.toFixed(0) : 'N/A'}</p>
         <p>
           <strong>推薦スコア:</strong>{' '}
-          <Tag color="green">{item.score.toFixed(3)}</Tag>
+          <Tag color="green">{normalizedScore.toFixed(3)}</Tag>
         </p>
         <div style={{ marginTop: 12 }}>
           <StarOutlined style={{ color: '#faad14', marginRight: 4 }} />
-          <span>おすすめ度: {(item.score * 100).toFixed(1)}%</span>
+          <span>おすすめ度: {(normalizedScore * 100).toFixed(1)}%</span>
+        </div>
+        <div style={{ marginTop: 4, color: '#888', fontSize: 12 }}>
+          生スコア: {rawScore.toFixed(3)}
         </div>
       </Card>
-    </Col>
-  );
+      </Col>
+    );
+  };
 
   return (
     <div style={{ padding: 24 }}>
@@ -82,6 +104,7 @@ const RecommendPage = () => {
           <Form.Item
             label="顧客ID"
             name="customer_id"
+            initialValue={initialCustomerId}
             rules={[{ required: true, message: '顧客IDを入力してください' }]}
           >
             <Input placeholder="例: C000001" />
@@ -90,7 +113,7 @@ const RecommendPage = () => {
           <Form.Item
             label="推薦商品数"
             name="top_k"
-            initialValue={10}
+            initialValue={initialTopK}
           >
             <InputNumber min={1} max={50} style={{ width: '100%' }} />
           </Form.Item>
@@ -141,7 +164,7 @@ const RecommendPage = () => {
         >
           <Row gutter={16}>
             {popularItems.recommendations.map((item, index) => (
-              <Col span={8} key={item.product_id}>
+              <Col xs={24} sm={12} lg={8} key={item.product_id}>
                 <Card
                   hoverable
                   style={{ marginBottom: 16 }}

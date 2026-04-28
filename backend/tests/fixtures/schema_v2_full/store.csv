@@ -1,0 +1,2 @@
+store_id,store_name,store_type,prefecture,city,postcode,latitude,longitude,store_size_sqm,parking_spaces,location_type,opening_date,opening_hours,average_foot_traffic,competitor_sugi_store_count
+S000001,LUKE Drug & Beauty Omiya,drugstore,Saitama,Saitama,3300854,35.9067,139.6288,980,42,urban_residential,2022-03-15,09:00-22:00,171,31

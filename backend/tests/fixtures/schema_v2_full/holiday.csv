@@ -1,0 +1,120 @@
+date,holiday_name,holiday_type,is_long_weekend,holiday_weight
+2025-01-01,New Year Day,national,0,1.25
+2025-01-04,Weekend,weekend,0,0.55
+2025-01-05,Weekend,weekend,0,0.55
+2025-01-11,Weekend,weekend,1,0.55
+2025-01-12,Weekend,weekend,1,0.55
+2025-01-13,Coming of Age Day,national,1,1.0
+2025-01-18,Weekend,weekend,0,0.55
+2025-01-19,Weekend,weekend,0,0.55
+2025-01-25,Weekend,weekend,0,0.55
+2025-01-26,Weekend,weekend,0,0.55
+2025-02-01,Weekend,weekend,0,0.55
+2025-02-02,Weekend,weekend,0,0.55
+2025-02-08,Weekend,weekend,0,0.55
+2025-02-09,Weekend,weekend,0,0.55
+2025-02-11,National Foundation Day,national,0,1.0
+2025-02-15,Weekend,weekend,0,0.55
+2025-02-16,Weekend,weekend,0,0.55
+2025-02-22,Weekend,weekend,1,0.55
+2025-02-23,Emperor Birthday,national,1,1.0
+2025-02-24,Emperor Birthday Substitute,national,1,1.0
+2025-03-01,Weekend,weekend,0,0.55
+2025-03-02,Weekend,weekend,0,0.55
+2025-03-08,Weekend,weekend,0,0.55
+2025-03-09,Weekend,weekend,0,0.55
+2025-03-15,Weekend,weekend,0,0.55
+2025-03-16,Weekend,weekend,0,0.55
+2025-03-20,Vernal Equinox Day,national,0,1.0
+2025-03-22,Weekend,weekend,0,0.55
+2025-03-23,Weekend,weekend,0,0.55
+2025-03-29,Weekend,weekend,0,0.55
+2025-03-30,Weekend,weekend,0,0.55
+2025-04-05,Weekend,weekend,0,0.55
+2025-04-06,Weekend,weekend,0,0.55
+2025-04-12,Weekend,weekend,0,0.55
+2025-04-13,Weekend,weekend,0,0.55
+2025-04-19,Weekend,weekend,0,0.55
+2025-04-20,Weekend,weekend,0,0.55
+2025-04-26,Weekend,weekend,0,0.55
+2025-04-27,Weekend,weekend,0,0.55
+2025-04-29,Showa Day,national,0,1.0
+2025-05-03,Constitution Memorial Day,national,1,1.0
+2025-05-04,Greenery Day,national,1,1.0
+2025-05-05,Children Day,national,1,1.25
+2025-05-06,Children Day Substitute,national,1,1.0
+2025-05-10,Weekend,weekend,0,0.55
+2025-05-11,Weekend,weekend,0,0.55
+2025-05-17,Weekend,weekend,0,0.55
+2025-05-18,Weekend,weekend,0,0.55
+2025-05-24,Weekend,weekend,0,0.55
+2025-05-25,Weekend,weekend,0,0.55
+2025-05-31,Weekend,weekend,0,0.55
+2025-06-01,Weekend,weekend,0,0.55
+2025-06-07,Weekend,weekend,0,0.55
+2025-06-08,Weekend,weekend,0,0.55
+2025-06-14,Weekend,weekend,0,0.55
+2025-06-15,Weekend,weekend,0,0.55
+2025-06-21,Weekend,weekend,0,0.55
+2025-06-22,Weekend,weekend,0,0.55
+2025-06-28,Weekend,weekend,0,0.55
+2025-06-29,Weekend,weekend,0,0.55
+2025-07-05,Weekend,weekend,0,0.55
+2025-07-06,Weekend,weekend,0,0.55
+2025-07-12,Weekend,weekend,0,0.55
+2025-07-13,Weekend,weekend,0,0.55
+2025-07-19,Weekend,weekend,1,0.55
+2025-07-20,Weekend,weekend,1,0.55
+2025-07-21,Marine Day,national,1,1.0
+2025-07-26,Weekend,weekend,0,0.55
+2025-07-27,Weekend,weekend,0,0.55
+2025-08-02,Weekend,weekend,0,0.55
+2025-08-03,Weekend,weekend,0,0.55
+2025-08-09,Weekend,weekend,1,0.55
+2025-08-10,Weekend,weekend,1,0.55
+2025-08-11,Mountain Day,national,1,1.0
+2025-08-16,Weekend,weekend,0,0.55
+2025-08-17,Weekend,weekend,0,0.55
+2025-08-23,Weekend,weekend,0,0.55
+2025-08-24,Weekend,weekend,0,0.55
+2025-08-30,Weekend,weekend,0,0.55
+2025-08-31,Weekend,weekend,0,0.55
+2025-09-06,Weekend,weekend,0,0.55
+2025-09-07,Weekend,weekend,0,0.55
+2025-09-13,Weekend,weekend,1,0.55
+2025-09-14,Weekend,weekend,1,0.55
+2025-09-15,Respect for the Aged Day,national,1,1.0
+2025-09-20,Weekend,weekend,0,0.55
+2025-09-21,Weekend,weekend,0,0.55
+2025-09-23,Autumnal Equinox Day,national,0,1.0
+2025-09-27,Weekend,weekend,0,0.55
+2025-09-28,Weekend,weekend,0,0.55
+2025-10-04,Weekend,weekend,0,0.55
+2025-10-05,Weekend,weekend,0,0.55
+2025-10-11,Weekend,weekend,1,0.55
+2025-10-12,Weekend,weekend,1,0.55
+2025-10-13,Sports Day,national,1,1.0
+2025-10-18,Weekend,weekend,0,0.55
+2025-10-19,Weekend,weekend,0,0.55
+2025-10-25,Weekend,weekend,0,0.55
+2025-10-26,Weekend,weekend,0,0.55
+2025-11-01,Weekend,weekend,1,0.55
+2025-11-02,Weekend,weekend,1,0.55
+2025-11-03,Culture Day,national,1,1.0
+2025-11-08,Weekend,weekend,0,0.55
+2025-11-09,Weekend,weekend,0,0.55
+2025-11-15,Weekend,weekend,0,0.55
+2025-11-16,Weekend,weekend,0,0.55
+2025-11-22,Weekend,weekend,1,0.55
+2025-11-23,Labor Thanksgiving Day,national,1,1.0
+2025-11-24,Labor Thanksgiving Substitute,national,1,1.0
+2025-11-29,Weekend,weekend,0,0.55
+2025-11-30,Weekend,weekend,0,0.55
+2025-12-06,Weekend,weekend,0,0.55
+2025-12-07,Weekend,weekend,0,0.55
+2025-12-13,Weekend,weekend,0,0.55
+2025-12-14,Weekend,weekend,0,0.55
+2025-12-20,Weekend,weekend,0,0.55
+2025-12-21,Weekend,weekend,0,0.55
+2025-12-27,Weekend,weekend,0,0.55
+2025-12-28,Weekend,weekend,0,0.55

@@ -81,7 +81,7 @@ class DataQualityChecker:
                     'span_days': (df[col].max() - df[col].min()).days if pd.notna(df[col].max()) and pd.notna(df[col].min()) else None
                 }
         
-        # 重複チェック（主键候補）
+        # 重複チェック（主キー候補）
         report['duplicates'] = self._check_duplicates(df, sheet_name)
         
         # 異常値検出（数値列）
@@ -244,7 +244,7 @@ class DataQualityChecker:
                         'message': f"{sheet_name}.{field} の欠損データを確認・補完するか、除外を検討してください"
                     })
         
-        # 重複主键
+        # 重複主キー
         for sheet_name, sheet_report in self.quality_report['sheet_reports'].items():
             for key_col, key_info in sheet_report['duplicates'].get('key_candidates', {}).items():
                 if not key_info['is_unique'] and key_info['duplicates'] > 0:

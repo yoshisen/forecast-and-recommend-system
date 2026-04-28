@@ -3,7 +3,6 @@ Pydantic Schemas - データ検証とシリアライズ
 """
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
-from datetime import datetime
 
 
 class UploadResponse(BaseModel):
@@ -24,6 +23,8 @@ class DataSummary(BaseModel):
     filename: str
     overall_summary: Dict[str, Any]
     sheet_summaries: Dict[str, Dict[str, Any]]
+    training: Optional[Dict[str, Any]] = None
+    task_readiness: Optional[Dict[str, Any]] = None
 
 
 class ForecastRequest(BaseModel):
@@ -32,6 +33,7 @@ class ForecastRequest(BaseModel):
     store_id: str
     horizon: int = Field(default=14, ge=1, le=90)
     use_baseline: bool = False
+    algorithm: str = "lightgbm"
 
 
 class BatchForecastRequest(BaseModel):
@@ -44,12 +46,30 @@ class ForecastResponse(BaseModel):
     """予測レスポンス"""
     product_id: str
     store_id: str
+    requested_algorithm: str
+    algorithm: str
     method: str
     horizon: int
     predictions: List[float]
     dates: List[str]
     total_forecast: float
     avg_daily_forecast: float
+
+
+class TotalForecastResponse(BaseModel):
+    """Home画面向け総額予測レスポンス"""
+    version: str
+    horizon: int
+    method: str
+    model_type: str
+    metric: str
+    dates: List[str]
+    totals: List[float]
+    cumulative_total: float
+    avg_daily_total: float
+    model_ready: bool
+    fallback_used: bool
+    note: Optional[str] = None
 
 
 class RecommendRequest(BaseModel):

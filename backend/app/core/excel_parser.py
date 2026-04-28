@@ -9,29 +9,15 @@ import re
 from datetime import datetime
 import logging
 
+from app.core.upload_schema_catalog import SHEET_ALIAS_CATALOG, build_parser_field_mappings
+
 logger = logging.getLogger(__name__)
 
 
 class SheetMapper:
     """Sheet名を標準名にマッピング"""
-    
-    SHEET_MAPPINGS = {
-        'transaction': ['transaction', 'transactions', 'orders', 'order', '取引', '交易', 'トランザクション'],
-        'transaction_items': ['transactionitems', 'transaction_items', 'orderitems', 'order_items', 
-                             'orderdetails', '取引明細', '交易明细', 'トランザクション明細'],
-        'product': ['product', 'products', 'item', 'items', '商品', 'プロダクト'],
-        'customer': ['customer', 'customers', 'user', 'users', 'member', '客户', '顧客', 'カスタマー'],
-        'store': ['store', 'stores', 'shop', 'shops', 'location', '门店', '店舗', 'ストア'],
-        'inventory': ['inventory', 'stock', 'stocklevel', '库存', '在庫', 'インベントリ'],
-        'promotion': ['promotion', 'promotions', 'campaign', '促销', 'プロモーション'],
-        'weather': ['weather', 'climate', '天气', '天気'],
-        'holiday': ['holiday', 'holidays', 'festival', '节假日', '祝日', 'ホリデー'],
-        'customer_behavior': ['customerbehavior', 'customer_behavior', 'userbehavior', 
-                             '客户行为', '顧客行動'],
-        'product_association': ['productassociation', 'product_association', 'association',
-                               '商品关联', '商品関連'],
-        'review': ['review', 'reviews', 'feedback', 'rating', '评价', 'レビュー'],
-    }
+
+    SHEET_MAPPINGS = SHEET_ALIAS_CATALOG
     
     @classmethod
     def normalize_sheet_name(cls, sheet_name: str) -> str:
@@ -54,31 +40,9 @@ class SheetMapper:
 
 class FieldStandardizer:
     """フィールド名の標準化"""
-    
-    # 標準フィールド名マッピング
-    FIELD_MAPPINGS = {
-        # Transaction
-        'transaction_id': ['transactionid', 'transaction_id', 'trans_id', 'order_id', 'orderid'],
-        'customer_id': ['customerid', 'customer_id', 'cust_id', 'user_id', 'userid'],
-        'transaction_date': ['transactiondate', 'transaction_date', 'date', 'order_date', 'orderdate'],
-        'transaction_time': ['transactiontime', 'transaction_time', 'time', 'order_time'],
-        'store_id': ['storeid', 'store_id', 'shop_id', 'shopid', 'location_id'],
-        'total_amount': ['totalamount', 'total_amount', 'amount', 'total', 'total_price'],
-        
-        # Product
-        'product_id': ['productid', 'product_id', 'prod_id', 'item_id', 'itemid'],
-        'product_name': ['productname', 'product_name', 'name', 'item_name'],
-        'category_level1': ['categorylevel1', 'category_level1', 'category1', 'main_category'],
-        'category_level2': ['categorylevel2', 'category_level2', 'category2', 'sub_category'],
-        'category_level3': ['categorylevel3', 'category_level3', 'category3'],
-        'retail_price': ['retailprice', 'retail_price', 'price', 'unit_price', 'unitprice'],
-        'cost_price': ['costprice', 'cost_price', 'cost'],
-        
-        # Customer
-        'age': ['age', 'customer_age'],
-        'gender': ['gender', 'sex'],
-        'registration_date': ['registrationdate', 'registration_date', 'reg_date', 'join_date'],
-    }
+
+    # Shared alias catalog keeps parser and upload-guide page aligned.
+    FIELD_MAPPINGS = build_parser_field_mappings()
     
     @classmethod
     def normalize_field_name(cls, field_name: str) -> str:
@@ -265,7 +229,15 @@ class ExcelParser:
         numeric_preferred = {
             'quantity','sales_quantity','purchase_count','line_total','line_total_jpy',
             'unit_price','unit_price_jpy','discount_price_jpy','original_price_jpy',
-            'total_amount','total_amount_jpy','tax_amount_jpy','waon_points_used','waon_points_earned'
+            'total_amount','total_amount_jpy','tax_amount_jpy','discount_amount_jpy',
+            'retail_price_jpy','cost_price_jpy','item_margin_jpy',
+            'stock_quantity','reorder_point','max_stock_level',
+            'weight_g','average_foot_traffic','store_size_sqm',
+            'household_size','shelf_life_days','days_on_shelf','age',
+            'avg_basket_size','avg_transaction_value_jpy','purchase_frequency',
+            'days_since_last_purchase','promotion_response_rate','churn_risk_score',
+            'support','confidence','lift','co_purchase_count_30d',
+            'waon_points_used','waon_points_earned'
         }
         for col in df.columns:
             series = df[col]

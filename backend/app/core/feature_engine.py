@@ -20,13 +20,18 @@ class FeatureEngine:
     def generate_forecast_features(self) -> pd.DataFrame:
         """予測用特徴を生成"""
         logger.info("Generating forecasting features")
-        
-        # Transaction Items をベースに
-        if 'transaction_items' not in self.parsed_data or 'transaction' not in self.parsed_data:
-            raise ValueError("transaction_items と transaction が必要です")
-        
+
+        # transaction_items is the only hard requirement. Missing transaction sheet will degrade gracefully.
+        if 'transaction_items' not in self.parsed_data:
+            raise ValueError("transaction_items が必要です")
+
         items_df = self.parsed_data['transaction_items'].copy()
-        trans_df = self.parsed_data['transaction'].copy()
+        trans_df = self.parsed_data.get('transaction')
+        if trans_df is None:
+            trans_df = pd.DataFrame()
+            logger.warning("transaction sheet is missing; running degraded forecast feature generation")
+        else:
+            trans_df = trans_df.copy()
 
         # 型異常対策: 数量・金額・価格系が datetime64 に誤変換されている場合を数値へ戻す
         def _coerce_numeric(df_local, cols):
@@ -107,7 +112,16 @@ class FeatureEngine:
     
     def _find_date_column(self, df: pd.DataFrame) -> Optional[str]:
         """日付列を探す"""
-        date_candidates = ['transaction_date', 'date', 'order_date', 'sale_date']
+        date_candidates = [
+            'transaction_date',
+            'date',
+            'order_date',
+            'sale_date',
+            'transaction_datetime',
+            'transaction_timestamp',
+            'event_timestamp',
+            'last_purchase_date',
+        ]
         for col in date_candidates:
             if col in df.columns:
                 return col
@@ -156,27 +170,46 @@ class FeatureEngine:
         
         if 'quantity' in df.columns:
             agg_dict['quantity'] = 'sum'
+        elif 'purchase_count' in df.columns:
+            agg_dict['purchase_count'] = 'sum'
         
         if 'line_total' in df.columns:
             agg_dict['line_total'] = 'sum'
+        elif 'line_total_jpy' in df.columns:
+            agg_dict['line_total_jpy'] = 'sum'
         elif 'total_amount' in df.columns:
             agg_dict['total_amount'] = 'sum'
+        elif 'total_amount_jpy' in df.columns:
+            agg_dict['total_amount_jpy'] = 'sum'
         
         if 'unit_price' in df.columns:
             agg_dict['unit_price'] = 'mean'
+        elif 'unit_price_jpy' in df.columns:
+            agg_dict['unit_price_jpy'] = 'mean'
         elif 'retail_price_jpy' in df.columns:
             agg_dict['retail_price_jpy'] = 'mean'
+
+        if not agg_dict:
+            # Last fallback: keep at least one row per group so downstream steps can still run.
+            df['_fallback_counter'] = 1
+            agg_dict['_fallback_counter'] = 'sum'
         
         agg_df = df.groupby(group_cols).agg(agg_dict).reset_index()
         
         # カラム名を統一
         if 'line_total' in agg_df.columns:
             agg_df.rename(columns={'line_total': 'sales_amount'}, inplace=True)
+        elif 'line_total_jpy' in agg_df.columns:
+            agg_df.rename(columns={'line_total_jpy': 'sales_amount'}, inplace=True)
         elif 'total_amount' in agg_df.columns:
             agg_df.rename(columns={'total_amount': 'sales_amount'}, inplace=True)
+        elif 'total_amount_jpy' in agg_df.columns:
+            agg_df.rename(columns={'total_amount_jpy': 'sales_amount'}, inplace=True)
         
         if 'quantity' in agg_df.columns:
             agg_df.rename(columns={'quantity': 'sales_quantity'}, inplace=True)
+        elif 'purchase_count' in agg_df.columns:
+            agg_df.rename(columns={'purchase_count': 'sales_quantity'}, inplace=True)
         else:
             agg_df['sales_quantity'] = 1  # デフォルト
         
@@ -229,7 +262,7 @@ class FeatureEngine:
     
     def _add_price_features(self, agg_df: pd.DataFrame, detail_df: pd.DataFrame) -> pd.DataFrame:
         """価格関連特徴を追加"""
-        price_cols = ['unit_price', 'retail_price_jpy', 'discount_price_jpy', 'original_price_jpy']
+        price_cols = ['unit_price', 'unit_price_jpy', 'retail_price_jpy', 'discount_price_jpy', 'original_price_jpy']
         
         available_price_cols = [col for col in price_cols if col in detail_df.columns]
         
@@ -237,7 +270,11 @@ class FeatureEngine:
             return agg_df
         
         # 価格統計を集計
-        group_cols = ['product_id', 'store_id', 'date'] if all(c in detail_df.columns for c in ['product_id', 'store_id', 'date']) else []
+        group_cols = [col for col in ['product_id', 'store_id', 'date'] if col in detail_df.columns]
+        if 'date' not in group_cols:
+            return agg_df
+        if not all(col in agg_df.columns for col in group_cols):
+            return agg_df
         
         if group_cols:
             price_stats = detail_df.groupby(group_cols).agg({
@@ -294,11 +331,12 @@ class FeatureEngine:
     def _add_holiday_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """祝日特徴を追加"""
         holiday_df = self.parsed_data['holiday']
-        
-        if 'date' not in df.columns or 'date' not in holiday_df.columns:
+
+        holiday_date_col = 'date' if 'date' in holiday_df.columns else 'holiday_date' if 'holiday_date' in holiday_df.columns else None
+        if 'date' not in df.columns or holiday_date_col is None:
             return df
-        
-        holiday_df['date'] = pd.to_datetime(holiday_df['date'], errors='coerce')
+
+        holiday_df['date'] = pd.to_datetime(holiday_df[holiday_date_col], errors='coerce')
         holiday_df['is_holiday'] = 1
         
         df = df.merge(holiday_df[['date', 'is_holiday']], on='date', how='left')
@@ -315,11 +353,12 @@ class FeatureEngine:
             merge_cols = ['product_id']
             if 'store_id' in df.columns and 'store_id' in inv_df.columns:
                 merge_cols.append('store_id')
-            
-            inv_features = inv_df.groupby(merge_cols).agg({
-                'stock_quantity': 'last',
-                'reorder_point': 'last'
-            }).reset_index()
+
+            value_cols = [col for col in ['stock_quantity', 'reorder_point', 'max_stock_level'] if col in inv_df.columns]
+            if not value_cols:
+                return df
+
+            inv_features = inv_df.groupby(merge_cols).agg({col: 'last' for col in value_cols}).reset_index()
             
             df = df.merge(inv_features, on=merge_cols, how='left')
         
@@ -348,6 +387,10 @@ class RecommendationFeatureEngine:
             df = items_df.merge(trans_df[['transaction_id', 'customer_id']], on='transaction_id', how='left')
         else:
             raise ValueError("transaction_id が見つかりません")
+
+        if 'quantity' not in df.columns:
+            # Degrade gracefully: use transaction count when quantity is missing.
+            df['quantity'] = 1
         
         # 顧客×商品の購買回数を集計
         if 'customer_id' not in df.columns or 'product_id' not in df.columns:

@@ -75,7 +75,7 @@ async def get_popular_recommendations(
     version: Optional[str] = Query(None, description="データバージョン")
 ):
     """
-    人気商品推薦（冷启动用）
+    人気商品推薦（コールドスタート用）
     
     Args:
         top_k: 推薦商品数
